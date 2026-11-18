@@ -1,12 +1,9 @@
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.venv/
-venv/
+# Build context only needs go.mod, go.sum, cmd/ and internal/.
+.git/
+testdata/
+**/*_test.go
+*.md
+.env
+.env.example
 dist/
 build/
-.git/
-*.pyc
-.env.example
-.env
