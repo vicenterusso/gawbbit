@@ -179,6 +179,26 @@ rclone loop that copies new raw objects from SeaweedFS to an AWS bucket every
 Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
 (`--prune`).
 
+## End-to-end test
+
+`./e2e.sh --build` builds the four Go images, deploys this stack on a
+single-node swarm with random secrets, two collectors and two raw-writers,
+and runs [`rawbbit-loadgen`](../../tools/loadgen/README.md). The load
+generator sends events (plus requests that must be rejected and duplicate
+batches) through Caddy, triggers a runner backfill and checks through the MCP
+endpoint that ClickHouse holds every accepted event exactly once. A second
+backfill must not duplicate rows. The stack and its data are removed
+afterwards (`--keep` leaves them). It publishes ports 80/443, so run it on a
+CI runner, a throwaway VM or in Docker-in-Docker:
+
+```bash
+docker run -d --privileged --name rawbbit-e2e docker:29-dind
+# copy the repository in, install bash and curl, then:
+docker exec rawbbit-e2e sh -c "cd /work/quickstart/swarm && ./e2e.sh --build"
+```
+
+The CI workflow runs it on every push and pull request.
+
 ## Differences from the two-VM guides
 
 - ClickHouse, SeaweedFS S3, NATS and Postgres are reachable only on the
@@ -195,6 +215,13 @@ Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
   runner upgrade that changes routing, drain it first with
   `docker service scale rawbbit_dbt-runner=0`, wait until no job is running,
   then deploy.
+- The runner needs `SELECT` on `system.processes`, `system.mutations`,
+  `system.query_log`, `system.tables` and `system.columns` for its safety
+  checks. The two-VM guides leave these grants to an operator; here
+  [`clickhouse/03_dbt_observation_grants.sh`](clickhouse/03_dbt_observation_grants.sh)
+  applies them on the first boot of an empty ClickHouse data directory. Without
+  them the runner fences itself and loads nothing (`dbt-job verify-control`
+  returns `control_access_unverified`).
 - SeaweedFS runs as uid 1000 (`seaweed`) and the runner as uid 1000; the
   bootstrap script creates their directories with that owner.
 - There is no `depends_on` in Swarm. On a first deploy, raw-writer and the
@@ -212,6 +239,7 @@ Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
 | `.env.example` | all settings |
 | `deploy.sh` | validate, name configs by hash, deploy, clean up |
 | `bootstrap-data-node.sh` | host directories |
+| `e2e.sh` | end-to-end test on a single-node swarm (used by CI) |
 | `Caddyfile` | public routes: collector, MCP, Metabase |
 
 The NATS, ClickHouse and Postgres config files are shared with

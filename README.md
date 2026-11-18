@@ -70,6 +70,7 @@ storage.
 - [Quickstart](#quickstart)
 - [Relationship to Rawbbit](#relationship-to-rawbbit)
 - [Published images](#published-images)
+- [Testing and CI](#testing-and-ci)
 - [Configuration](#configuration)
 - [Repository layout](#repository-layout)
 - [Project status](#project-status)
@@ -181,7 +182,21 @@ Rawbbit Python code.
 
 ## Published images
 
-Gawbbit has not published any images yet.
+The [CI workflow](.github/workflows/ci.yml) builds the four Go images for
+`linux/amd64` and `linux/arm64` and pushes them to the GitHub Container
+Registry of the repository owner, after every test job has passed:
+
+- `ghcr.io/<owner>/rawbbit-collector-api`
+- `ghcr.io/<owner>/rawbbit-raw-writer`
+- `ghcr.io/<owner>/rawbbit-mcp-server`
+- `ghcr.io/<owner>/rawbbit-dbt-runner`
+
+Tags: `edge` and the branch name for the default branch, `main` for main,
+`sha-<short>` for every push, and `1.2.3` plus `1.2` for a `v1.2.3` tag. Use a
+version or `sha-` tag in deployments, not `edge`. Packages of a private
+repository are private: log in on every node
+(`docker login ghcr.io` with a token that has `read:packages`) and deploy with
+`--with-registry-auth`, which the Swarm `deploy.sh` does.
 
 The quickstart Compose files and Ansible defaults still pin the Rawbbit images
 below. Those were built from the Python implementation and are `linux/amd64`
@@ -197,19 +212,34 @@ collector-api 0.1.10 validation envelope (HTTP 422 with only `type`, `loc` and
 `msg`, at most 20 entries) and the MCP 0.0.4 Nullable JSON fix. See
 [Rawbbit](https://github.com/mirlan-irokez/rawbbit) for the release history.
 
-To deploy Gawbbit, build and push multi-arch images from each service folder,
-for example:
+To build an image yourself, run buildx from the service folder, for example:
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
   -t <registry>/rawbbit-collector-api:<tag> --push backend/collector-api
 ```
 
-Then set those images in `quickstart/vm_rawbbit_one/docker-compose.yml` for VM
-one, and through `DBT_RUNNER_IMAGE` and `MCP_SERVER_IMAGE` for VM two. With
-Ansible, set `rawbbit_two_dbt_runner_image` and `rawbbit_two_mcp_image`.
+Set the images in `quickstart/swarm/.env` for the Swarm stack, in
+`quickstart/vm_rawbbit_one/docker-compose.yml` for VM one, and through
+`DBT_RUNNER_IMAGE` and `MCP_SERVER_IMAGE` for VM two. With Ansible, set
+`rawbbit_two_dbt_runner_image` and `rawbbit_two_mcp_image`.
 
 Secrets are not baked into these images. Provide API keys, storage credentials, ClickHouse passwords, and MCP bearer tokens through private `.env` files or secret management.
+
+## Testing and CI
+
+Three levels of tests, all run by [`ci.yml`](.github/workflows/ci.yml) on every
+push and pull request:
+
+| Level | What | Run locally |
+|---|---|---|
+| Unit | `go test -race ./...` in each of the nine Go modules (including the Python parity goldens), gofmt, vet, amd64/arm64 cross-compile; the browser SDK's `npm test` | `cd <module> && go test ./...` |
+| Integration | collector and raw-writer against NATS JetStream and SeaweedFS, the ingestion runner, MCP server and dataset provisioner against ClickHouse (disposable containers) | [`scripts/test-integration.sh`](scripts/test-integration.sh) |
+| End to end | builds the images, deploys the Swarm stack on a single-node swarm and runs [`rawbbit-loadgen`](tools/loadgen/README.md): events through Caddy, collectors, NATS, raw-writers, SeaweedFS, the runner and ClickHouse, checked through the MCP endpoint | [`quickstart/swarm/e2e.sh --build`](quickstart/swarm/e2e.sh) |
+
+The image job runs only when all three pass, and only for pushes (not pull
+requests). [`rawbbit-loadgen`](tools/loadgen/README.md) also works against a
+real deployment, for load tests or a post-deploy smoke test.
 
 ## Configuration
 
@@ -246,7 +276,9 @@ plugins/rawbbit-game-events/
   codex/           Codex plugin with bundled SDKs and optional SDK catalog
 .claude-plugin/    Claude Code plugin marketplace for this repository
 .agents/plugins/   Codex plugin marketplace for this repository
-quickstart/        Provider-neutral VM deployment guides
+quickstart/        Provider-neutral VM and Docker Swarm deployment guides
+tools/loadgen/     Synthetic event load generator and end-to-end verifier
+scripts/           Integration test runner
 docs/              OSS documentation
 ```
 

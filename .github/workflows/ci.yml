@@ -1,0 +1,190 @@
+name: CI
+
+# Unit tests -> integration tests + Swarm end-to-end load test -> images.
+# Images are pushed to GHCR only for pushes to the default branch, main or a
+# v* tag, and only after every test job passed.
+
+on:
+  push:
+    branches: [go-rewrite, main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      e2e_events:
+        description: Events the end-to-end load test sends
+        default: "3000"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  go-unit:
+    name: unit ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - backend/collector-api
+          - backend/raw-writer
+          - dbt_project
+          - mcp-server
+          - plugins/rawbbit-game-events/claude
+          - plugins/rawbbit-game-events/codex
+          - quickstart/vm_rawbbit_two/clickhouse/provisioner
+          - quickstart/vm_rawbbit_two/deployer
+          - tools/loadgen
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache-dependency-path: ${{ matrix.module }}/go.*
+
+      # The deployer's rendering tests run ansible-playbook when it is present.
+      - name: Install Ansible for the deployer rendering tests
+        if: matrix.module == 'quickstart/vm_rawbbit_two/deployer'
+        run: pipx install 'ansible-core==2.19.11'
+
+      - name: gofmt
+        run: test -z "$(gofmt -l . | tee /dev/stderr)"
+
+      - name: go vet
+        run: go vet ./... && go vet -tags integration ./...
+
+      - name: go test
+        run: go test -race -count=1 ./...
+
+      - name: Cross-compile linux/amd64 and linux/arm64
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./...
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build ./...
+
+  sdk-js:
+    name: unit browser SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sdk/rawbbit-browser-game
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sdk/rawbbit-browser-game/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:source-isolation
+
+  integration:
+    name: integration (NATS, SeaweedFS, ClickHouse)
+    needs: go-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/collector-api/go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: Run every integration suite on disposable containers
+        run: scripts/test-integration.sh
+
+  e2e:
+    name: end-to-end Swarm load test
+    needs: go-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: tools/loadgen/go.mod
+          cache-dependency-path: tools/loadgen/go.mod
+      - name: Build images, deploy the stack and run rawbbit-loadgen
+        env:
+          E2E_EVENTS: ${{ inputs.e2e_events || '3000' }}
+        run: quickstart/swarm/e2e.sh --build
+
+  images:
+    name: image ${{ matrix.image.name }}
+    needs: [integration, e2e, sdk-js]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - { name: rawbbit-collector-api, context: backend/collector-api }
+          - { name: rawbbit-raw-writer, context: backend/raw-writer }
+          - { name: rawbbit-mcp-server, context: mcp-server }
+          - { name: rawbbit-dbt-runner, context: dbt_project }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Image name
+        id: name
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ matrix.image.name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=edge,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image.name }}
+
+      # The runner image runs `apk add` in its arm64 stage; the Go stages
+      # cross-compile natively.
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.image.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+          provenance: false
