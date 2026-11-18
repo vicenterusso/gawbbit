@@ -184,17 +184,22 @@ Rawbbit Python code.
 
 The [CI workflow](.github/workflows/ci.yml) builds the four Go images for
 `linux/amd64` and `linux/arm64` and pushes them to the GitHub Container
-Registry of the repository owner, after every test job has passed:
+Registry of the repository owner when a release tag (`v*`) is pushed, after
+every test job has passed:
 
 - `ghcr.io/<owner>/rawbbit-collector-api`
 - `ghcr.io/<owner>/rawbbit-raw-writer`
 - `ghcr.io/<owner>/rawbbit-mcp-server`
 - `ghcr.io/<owner>/rawbbit-dbt-runner`
 
-Tags: `edge` and the branch name for the default branch, `main` for main,
-`sha-<short>` for every push, and `1.2.3` plus `1.2` for a `v1.2.3` tag. Use a
-version or `sha-` tag in deployments, not `edge`. Packages of a private
-repository are private: log in on every node
+A `v1.2.3` tag publishes `1.2.3`, `1.2` and `latest`; pin a version in
+deployments. Ordinary pushes only run the tests. To release:
+
+```bash
+git tag v1.0.0 && git push gawbbit v1.0.0
+```
+
+Packages of a private repository are private: log in on every node
 (`docker login ghcr.io` with a token that has `read:packages`) and deploy with
 `--with-registry-auth`, which the Swarm `deploy.sh` does.
 
@@ -237,9 +242,9 @@ push and pull request:
 | Integration | collector and raw-writer against NATS JetStream and SeaweedFS, the ingestion runner, MCP server and dataset provisioner against ClickHouse (disposable containers) | [`scripts/test-integration.sh`](scripts/test-integration.sh) |
 | End to end | builds the images, deploys the Swarm stack on a single-node swarm and runs [`rawbbit-loadgen`](tools/loadgen/README.md): events through Caddy, collectors, NATS, raw-writers, SeaweedFS, the runner and ClickHouse, checked through the MCP endpoint | [`quickstart/swarm/e2e.sh --build`](quickstart/swarm/e2e.sh) |
 
-The image job runs only when all three pass, and only for pushes (not pull
-requests). [`rawbbit-loadgen`](tools/loadgen/README.md) also works against a
-real deployment, for load tests or a post-deploy smoke test.
+The image job runs only for a `v*` tag, and only when all three pass.
+[`rawbbit-loadgen`](tools/loadgen/README.md) also works against a real
+deployment, for load tests or a post-deploy smoke test.
 
 ## Configuration
 
