@@ -1,4 +1,20 @@
-# Rawbbit
+# Gawbbit
+
+**Gawbbit is a rewrite of [Rawbbit](https://github.com/mirlan-irokez/rawbbit) in Go.**
+All services and host helpers that were Python in Rawbbit (collector-api,
+raw-writer, the MCP server, the dbt-based ingestion runner and the VM-two
+helpers) are now static Go binaries for `linux/amd64` and `linux/arm64`, for
+example OCI Ampere A1. Contracts are unchanged: environment variables, ports,
+HTTP and MCP APIs, NATS messages, the Parquet layout, the SQL and the CLIs
+behave as in Rawbbit, so Gawbbit is a drop-in replacement for an existing
+Rawbbit deployment. See [Relationship to Rawbbit](#relationship-to-rawbbit).
+
+Component, binary, image and container names keep the `rawbbit` prefix
+(for example `rawbbit-collector-api` and `rawbbit-mcp-server`) so existing
+configuration, Compose files and Ansible inventories keep working.
+
+The rest of this README describes the system. "Rawbbit" in it refers to the
+pipeline that both projects implement.
 
 Rawbbit is a self-hosted event telemetry pipeline for mobile and web games.
 It helps small teams collect player events, sessions, funnels, retention signals, economy events, monetization events, and backend game-service events while keeping ownership of the raw data.
@@ -16,7 +32,7 @@ Main Rawbbit path:
 ```text
 Producer -> Collector API -> NATS JetStream -> Raw Writer
   -> S3-compatible object storage / SeaweedFS Parquet
-  -> scheduled dbt ingestion
+  -> scheduled Go ingestion runner
   -> ClickHouse analytics.events
   -> MCP / Metabase / agents / users
 ```
@@ -40,9 +56,9 @@ guides:
 
 - VM one runs ingestion and raw object storage: Caddy, NATS JetStream,
   collector-api, raw-writer, and SeaweedFS, with optional Dozzle log access
-- VM two runs analytics and access surfaces: ClickHouse, the scheduled Rawbbit
-  dbt runner, the Rawbbit MCP server, Metabase, and Postgres for Metabase state,
-  with optional Dozzle log access
+- VM two runs analytics and access surfaces: ClickHouse, the scheduled
+  ingestion runner (Compose service `dbt-runner`), the Rawbbit MCP server,
+  Metabase, and Postgres for Metabase state, with optional Dozzle log access
 
 The boundary between the VMs is the raw Parquet layer in S3-compatible object
 storage.
@@ -52,6 +68,7 @@ storage.
 - [What is included](#what-is-included)
 - [Architecture](#architecture)
 - [Quickstart](#quickstart)
+- [Relationship to Rawbbit](#relationship-to-rawbbit)
 - [Published images](#published-images)
 - [Configuration](#configuration)
 - [Repository layout](#repository-layout)
@@ -66,7 +83,7 @@ This repository contains the public game-telemetry ingestion-to-analytics path:
 - `backend/collector-api` — HTTP ingestion service for player, gameplay, product, and server events
 - `backend/raw-writer` — JetStream consumer that writes partitioned Parquet files
 - `clickhouse/` — main analytical/query path for loading and querying raw game telemetry in ClickHouse
-- `dbt_project/` — scheduled ingestion runner (Go; formerly dbt Core) that loads bounded Parquet windows into `analytics.events`
+- `dbt_project/` — scheduled Go ingestion runner (replaces Rawbbit's dbt Core project; the directory name is kept for compatibility) that loads bounded Parquet windows into `analytics.events`
 - `mcp-server/` — Rawbbit MCP server, MCP client setup, and combined MCP + Metabase deployment guide
 - AI agents and MCP clients such as Codex, OpenCode, and OpenClaw can connect to the Rawbbit MCP server endpoint for read-only analytics exploration
 - `metabase/` — optional standalone Metabase deployment guide
@@ -84,7 +101,7 @@ The system is built around a few explicit boundaries:
 - [NATS JetStream](https://nats.io/) separates request handling from storage writes
 - the raw writer lands durable Parquet files in object storage
 - raw Parquet is the system-of-record boundary for downstream telemetry work
-- scheduled dbt ingestion reconciles bounded Parquet windows into `analytics.events`; the shell loader remains a mutually exclusive legacy fallback
+- the scheduled Go ingestion runner reconciles bounded Parquet windows into `analytics.events`; the shell loader remains a mutually exclusive legacy fallback
 - ClickHouse is the main analytical database and serving path for retention, funnel, session, and event analysis
 - MCP, Metabase, agents, and direct SQL are consumption surfaces on top of ClickHouse
 - downstream modeling can evolve without changing the ingestion contract
@@ -107,8 +124,8 @@ and Dozzle MCP access for inspecting ingestion VM containers.
 
 For the matching analytics VM deployment guide, see
 [`quickstart/vm_rawbbit_two/README.md`](quickstart/vm_rawbbit_two/README.md).
-It deploys ClickHouse, the persistent Rawbbit dbt runner, the Rawbbit MCP
-server, Metabase, and Postgres for Metabase state. The dbt runner reads bounded
+It deploys ClickHouse, the persistent ingestion runner, the Rawbbit MCP
+server, Metabase, and Postgres for Metabase state. The runner reads bounded
 Parquet windows from the VM-one S3-compatible endpoint and loads them into
 ClickHouse. It also documents optional Dozzle browser log access and Dozzle MCP
 access for inspecting analytics VM containers.
@@ -123,80 +140,69 @@ The shortest path to a working ingestion setup is:
 For the test event and landing check, see
 [VM-one verification](quickstart/vm_rawbbit_one/README.md#verification).
 
-## Implementation language
+## Relationship to Rawbbit
 
-All Rawbbit services and host helpers are written in Go: collector-api,
-raw-writer, the MCP server, the scheduled ingestion runner (`dbt_project/`,
-which no longer uses dbt), and the VM-two host helpers
-`rawbbit-deploy-dbt-runner` and `rawbbit-provision-datasets`. Each is a
-separate Go module that builds as a static `CGO_ENABLED=0` binary for
-`linux/amd64` and `linux/arm64` (for example OCI Ampere A1). The Dockerfiles
-use `TARGETOS`/`TARGETARCH`, so multi-arch images can be built with
+Gawbbit started from the Rawbbit repository
+([`mirlan-irokez/rawbbit`](https://github.com/mirlan-irokez/rawbbit)) and keeps
+its full history. The SDKs, the ClickHouse SQL, the Compose and Ansible
+deployment guides, the plugins and the documentation come from Rawbbit. What
+changed is the implementation language of the runtime code:
+
+| Component | Rawbbit | Gawbbit |
+|---|---|---|
+| `backend/collector-api` | Python (FastAPI) | Go |
+| `backend/raw-writer` | Python (pyarrow) | Go (arrow-go) |
+| `mcp-server` | Python | Go (official MCP Go SDK) |
+| `dbt_project` ingestion runner | Python wrapper around dbt Core + dbt-clickhouse | Go runner issuing the same SQL dbt-clickhouse 1.9.8 generated (`delete_insert` strategy) |
+| VM-two helpers `rawbbit-deploy-dbt-runner`, `rawbbit-provision-datasets` | Python scripts | Go binaries, built by Ansible on the controller for the VM architecture |
+| Plugin `verify-bundle` / `validate-plugin` scripts | Python | Go (`go run ./scripts/verify-bundle`) |
+
+Each component is a separate Go module (Go 1.24+) that builds as a static
+`CGO_ENABLED=0` binary for `linux/amd64` and `linux/arm64`. The Dockerfiles
+use `TARGETOS`/`TARGETARCH`, so multi-arch images build with
 `docker buildx build --platform linux/amd64,linux/arm64 ...`.
 
-The Go versions keep the previous Python services' environment variables,
-ports, HTTP/MCP contracts, NATS messages, Parquet layout, SQL and CLI
-behavior. Parity was checked by differential testing against the Python
-implementation, and the recorded Python outputs are kept as goldens in each
-module's `testdata/`. Deliberate differences are listed in each component
-README under "Go rewrite notes".
+Parity with Rawbbit was checked by differential testing: Python and Go ran
+side by side on the same inputs and their outputs were compared (HTTP
+responses, NATS messages, Parquet files and object keys, ClickHouse tables,
+DDL, state files, exit codes and logs). The recorded Python outputs are kept as
+goldens in each module's `testdata/`, so the tests still check parity without
+Python. Deliberate differences are listed in each component README under
+"Go rewrite notes".
 
-The optional `sqlmesh_project/` remains a configuration for the third-party
-SQLMesh tool (itself a Python application); it contains no Rawbbit Python code.
+The optional `sqlmesh_project/` is unchanged. It is configuration for the
+third-party SQLMesh tool (itself a Python application) and contains no
+Rawbbit Python code.
 
 ## Published images
 
-The image tags listed below were built from the previous Python
-implementation and are `linux/amd64` only. Go images have not been published
-yet.
+Gawbbit has not published any images yet.
 
-Rawbbit public service images use GHCR:
+The quickstart Compose files and Ansible defaults still pin the Rawbbit images
+below. Those were built from the Python implementation and are `linux/amd64`
+only, so they do not run on Arm hosts such as OCI Ampere:
 
-- `ghcr.io/mirlan-irokez/rawbbit-collector-api:0.1.8`
-- `ghcr.io/mirlan-irokez/rawbbit-collector-api:0.1.9` — published for `linux/amd64` (`sha256:bbb96b074a42640c8472aaf601c8187f068590b60abc2afe699d9f77f0758941`)
-- `ghcr.io/mirlan-irokez/rawbbit-collector-api:0.1.10` — published 2026-10-24 for `linux/amd64`; OCI index `sha256:710e4bcd5347b15d0f1cac819bc5d26320a39026012264c4ba76a0ca98095fce`, platform manifest `sha256:48014fa043cc8235251d97e6702e0418d92e5f014a19ff724a271a5117faac7a` (index includes an attestation manifest)
-- `ghcr.io/mirlan-irokez/rawbbit-raw-writer:0.1.11` — published
-- `ghcr.io/mirlan-irokez/rawbbit-mcp-server:0.0.2`
-- `ghcr.io/mirlan-irokez/rawbbit-mcp-server:0.0.3` — adds optional dataset endpoints
-- `ghcr.io/mirlan-irokez/rawbbit-mcp-server:0.0.4` — published 2026-11-09 for `linux/amd64`; fixes `discover_json_keys` on Nullable JSON columns; `latest` points here
+- `ghcr.io/mirlan-irokez/rawbbit-collector-api:0.1.10`
+- `ghcr.io/mirlan-irokez/rawbbit-raw-writer:0.1.11`
+- `ghcr.io/mirlan-irokez/rawbbit-mcp-server:latest` (currently 0.0.4; the Ansible default pins 0.0.2)
 - `ghcr.io/mirlan-irokez/rawbbit-dbt-runner:0.1.1`
 
-Prefer published pinned version tags for deployments. The 0.1.10 publication did
-not move the `latest` tag.
+The Go services implement the behavior of those releases, including the
+collector-api 0.1.10 validation envelope (HTTP 422 with only `type`, `loc` and
+`msg`, at most 20 entries) and the MCP 0.0.4 Nullable JSON fix. See
+[Rawbbit](https://github.com/mirlan-irokez/rawbbit) for the release history.
 
-Raw-writer `0.1.11` is published and includes malformed-message isolation.
+To deploy Gawbbit, build and push multi-arch images from each service folder,
+for example:
 
-Collector-api `0.1.9` is published. It adds
-browser exposure of only `Retry-After` and makes collector metadata authoritative:
-body-supplied `received_at`, `ingest.request_id`, `ingest.user_agent`,
-`ingest.ip_hash`, and `ingest.ip` are replaced with server-derived values (raw IP
-is removed when storage is disabled or no valid request IP is available), and
-top-level `received_at` is always populated.
-
-Collector-api `0.1.10` was published to GHCR on 2026-10-24 for `linux/amd64`.
-Validation failures preserve the HTTP 422 `detail` envelope but now expose only
-`type`, `loc`, and `msg`. At most 20 entries are returned; when there are more
-than 20, the response keeps the first 19 and uses this fixed `errors_truncated`
-marker in slot 20:
-
-```json
-{"type":"errors_truncated","loc":[],"msg":"Additional validation errors omitted"}
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t <registry>/rawbbit-collector-api:<tag> --push backend/collector-api
 ```
 
-The intentional body change removes Pydantic's `input`, `ctx`, and `url` fields.
-Malformed JSON now returns HTTP 422 instead of HTTP 500, so SDKs quarantine that
-response rather than retrying it as a server error. Stream startup logs
-`stream_created` after an initial genuine `NotFoundError` and successful
-compatible add, regardless of `did_create`; other compatible confirmations log
-`stream_exists_and_compatible`.
-
-The VM-one quickstart pin is updated to published collector-api `0.1.10` below.
-The 0.1.10 publication did not move the `latest` tag.
-
-The VM-one quickstart pins collector-api `0.1.10` and raw-writer `0.1.11`. To
-run local changes, build an image from the service folder (for example
-`docker build -t my-collector-api backend/collector-api`) and set that image in
-`quickstart/vm_rawbbit_one/docker-compose.yml`.
+Then set those images in `quickstart/vm_rawbbit_one/docker-compose.yml` for VM
+one, and through `DBT_RUNNER_IMAGE` and `MCP_SERVER_IMAGE` for VM two. With
+Ansible, set `rawbbit_two_dbt_runner_image` and `rawbbit_two_mcp_image`.
 
 Secrets are not baked into these images. Provide API keys, storage credentials, ClickHouse passwords, and MCP bearer tokens through private `.env` files or secret management.
 
@@ -204,7 +210,7 @@ Secrets are not baked into these images. Provide API keys, storage credentials, 
 
 The ingestion VM uses `quickstart/vm_rawbbit_one/.env.example` (the Ansible
 path renders the same variables from
-`quickstart/ansible/roles/rawbbit_one/templates/env.j2`); the ClickHouse/dbt
+`quickstart/ansible/roles/rawbbit_one/templates/env.j2`); the ClickHouse
 analytics VM uses `quickstart/vm_rawbbit_two/.env.example`.
 
 Important configuration groups:
@@ -213,7 +219,7 @@ Important configuration groups:
 - collector API limits, API keys, CORS settings, and optional GeoIP-related attribution requirements
 - raw-writer batching and ACK behavior
 - object-storage bucket, prefix, and credentials
-- dbt ingestion ownership, reconciliation windows, backfill chunking, and ClickHouse limits
+- ingestion runner ownership, reconciliation windows, backfill chunking, and ClickHouse limits
 
 For the grouped configuration guide, see [`docs/configuration.md`](docs/configuration.md).
 
@@ -267,7 +273,7 @@ Current maturity:
 - The copy-in Unity SDK is a source implementation; Unity Editor compilation, PlayMode tests, and Android/iOS player/device validation are not yet complete, so production compatibility is not established
 - The browser-game SDK source is included and builds independently of other SDK folders; the separate npm package remains private and unpublished
 - The browser-game SDK feature-checks secure top-level capabilities and has a passing Playwright run for Chromium, Firefox, and WebKit; no exact browser/version support matrix or real Safari/mobile-device validation is established.
-- The Rawbbit Game Event Tracking plugins are downloadable from GitHub releases. The Claude plugin is submitted to Anthropic's plugin directory and the Codex plugin is not yet listed in OpenAI's directory; until then, install them from the release ZIPs as described in [`docs/agent-plugins.md`](docs/agent-plugins.md).
+- The Rawbbit Game Event Tracking plugins are downloadable from the [Rawbbit GitHub releases](https://github.com/mirlan-irokez/rawbbit/releases); Gawbbit has not published plugin releases. The Claude plugin is submitted to Anthropic's plugin directory and the Codex plugin is not yet listed in OpenAI's directory; until then, install them from the release ZIPs as described in [`docs/agent-plugins.md`](docs/agent-plugins.md).
 
 The current release is intentionally narrow: it focuses on reliable player-event ingestion, durable raw storage, ClickHouse-backed analytics, and agent/BI access on top of that serving layer.
 
@@ -295,7 +301,7 @@ The included [SQLMesh](https://sqlmesh.readthedocs.io/en/stable/) model is inten
 
 ## License
 
-This project is released under the Apache License 2.0. See [`LICENSE`](LICENSE).
+This project is released under the Apache License 2.0, like Rawbbit. See [`LICENSE`](LICENSE).
 
 ---
 
