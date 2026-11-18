@@ -38,6 +38,6 @@ Report bugs and request features in the Rawbbit repository's GitHub Issues, or e
 
 - [Skill workflow](skills/rawbbit-game-events/SKILL.md)
 - [Unity SDK](skills/rawbbit-game-events/assets/sdk/rawbbit-unity/README.md) and [browser-game SDK](skills/rawbbit-game-events/assets/sdk/rawbbit-browser-game/README.md): copy the appropriate complete SDK into the game; do not build or install dependencies inside the plugin copy, which would invalidate its file inventory.
-- [Bundle manifest](skills/rawbbit-game-events/assets/sdk/BUNDLE-MANIFEST.json): SDK versions and file hashes. Run `python3 scripts/verify_bundle.py` from the plugin folder to check them; hashes detect changes but do not authenticate a publisher.
+- [Bundle manifest](skills/rawbbit-game-events/assets/sdk/BUNDLE-MANIFEST.json): SDK versions and file hashes. Run `go run ./scripts/verify-bundle` (Go 1.24+) from the plugin folder to check them; hashes detect changes but do not authenticate a publisher.
 - [Collector contract facts](skills/rawbbit-game-events/references/collector-contract.json) and [field ownership guidance](skills/rawbbit-game-events/references/schema-and-field-ownership.md).
 - [License](LICENSE): Apache-2.0. Each copyable SDK snapshot includes its own license text.
