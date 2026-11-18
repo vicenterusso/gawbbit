@@ -1,0 +1,30 @@
+{$COLLECTOR_PUBLIC_HOSTNAME} {
+	reverse_proxy collector-api:8080
+}
+
+{$MCP_PUBLIC_HOSTNAME} {
+	encode zstd gzip
+
+	reverse_proxy mcp-server:8000
+}
+
+{$METABASE_PUBLIC_HOSTNAME} {
+	encode zstd gzip
+
+	reverse_proxy metabase:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ClickHouse and SeaweedFS S3 are reachable only inside the overlay network.
+# To expose ClickHouse for IDE access, add a block such as:
+#
+# clickhouse.example.com {
+# 	encode zstd gzip
+# 	reverse_proxy clickhouse:8123
+# }

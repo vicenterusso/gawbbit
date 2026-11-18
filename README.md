@@ -130,6 +130,11 @@ Parquet windows from the VM-one S3-compatible endpoint and loads them into
 ClickHouse. It also documents optional Dozzle browser log access and Dozzle MCP
 access for inspecting analytics VM containers.
 
+To run everything as one Docker Swarm stack (single node or a cluster, with
+databases pinned to the master and replicated collectors), see
+[`quickstart/swarm/README.md`](quickstart/swarm/README.md). It also includes
+an optional off-site copy of the raw Parquet layer to AWS S3.
+
 The shortest path to a working ingestion setup is:
 
 1. deploy VM one with the [Ansible quickstart](quickstart/ansible/README.md)
