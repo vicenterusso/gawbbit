@@ -1,0 +1,443 @@
+[
+ {
+  "args": "",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "-h",
+  "columns": null,
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "-h",
+  "columns": "120",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "-h",
+  "columns": "40",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse\ndatasets safely\n\noptions:\n  -h, --help      show this help\n                  message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--help",
+  "columns": null,
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--help",
+  "columns": "120",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--help",
+  "columns": "40",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse\ndatasets safely\n\noptions:\n  -h, --help      show this help\n                  message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--config",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --bogus",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: --bogus\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --bogus",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: --bogus\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --bogus",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: --bogus\n"
+ },
+ {
+  "args": "--config a --runtime b --sch c --j d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime b --sch c --j d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime b --sch c --j d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--conf=a --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--conf=a --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--conf=a --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --config b --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --config b --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --config b --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "x --config a --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x\n"
+ },
+ {
+  "args": "x --config a --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x\n"
+ },
+ {
+  "args": "x --config a --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only=1",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: argument --preflight-only: ignored explicit argument '1'\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only=1",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --preflight-only: ignored explicit argument '1'\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only=1",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --preflight-only: ignored explicit argument '1'\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --pre",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --pre",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --pre",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config= --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config= --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config= --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "-- --config a",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "-- --config a",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "-- --config a",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "--config -x --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config -x --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config -x --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: argument --config: expected one argument\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d -h",
+  "columns": null,
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d -h",
+  "columns": "120",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse datasets safely\n\noptions:\n  -h, --help            show this help message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d -h",
+  "columns": "40",
+  "exit": 0,
+  "stdout": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\n\nProvision optional Rawbbit ClickHouse\ndatasets safely\n\noptions:\n  -h, --help      show this help\n                  message and exit\n  --config CONFIG\n  --runtime-config RUNTIME_CONFIG\n  --schema SCHEMA\n  --journal JOURNAL\n  --preflight-only\n",
+  "stderr": ""
+ },
+ {
+  "args": "--config a -x",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "--config a -x",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "--config a -x",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d x y",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x y\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d x y",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x y\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d x y",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: unrecognized arguments: x y\n"
+ },
+ {
+  "args": "--config a --runtime-config=--schema --schema c --journal d",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config=--schema --schema c --journal d",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config=--schema --schema c --journal d",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "-c a",
+  "columns": null,
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG\n                             --runtime-config RUNTIME_CONFIG --schema SCHEMA\n                             --journal JOURNAL [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "-c a",
+  "columns": "120",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h] --config CONFIG --runtime-config RUNTIME_CONFIG --schema SCHEMA --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "-c a",
+  "columns": "40",
+  "exit": 2,
+  "stdout": "",
+  "stderr": "usage: provision_datasets.py [-h]\n                             --config CONFIG\n                             --runtime-config RUNTIME_CONFIG\n                             --schema SCHEMA\n                             --journal JOURNAL\n                             [--preflight-only]\nprovision_datasets.py: error: the following arguments are required: --config, --runtime-config, --schema, --journal\n"
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only --preflight-only",
+  "columns": null,
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only --preflight-only",
+  "columns": "120",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ },
+ {
+  "args": "--config a --runtime-config b --schema c --journal d --preflight-only --preflight-only",
+  "columns": "40",
+  "exit": -1,
+  "stdout": "",
+  "stderr": ""
+ }
+]

@@ -1,0 +1,81 @@
+{
+ "name": "adoption_ordinary_database",
+ "files": {
+  "config.json": {
+   "version": 1,
+   "main_database": "analytics",
+   "main_user": "rawbbit_mcp",
+   "admin": {
+    "host": "127.0.0.1",
+    "port": 38123,
+    "username": "admin",
+    "password": "adminpw",
+    "timeout_seconds": 15
+   },
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "mode": "managed",
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "create_table": true,
+     "main_exposed": true,
+     "mcp_user": "rawbbit_mcp_team_a",
+     "mcp_role": "rawbbit_role_team_a",
+     "mcp_password": "pw-team_a",
+     "password_revision": 1,
+     "limits": {
+      "max_query_rows": 500,
+      "max_sample_rows": 50,
+      "max_execution_seconds": 30
+     },
+     "adopt": {
+      "database_uuid": "@dbuuid:team_a"
+     }
+    }
+   ]
+  },
+  "runtime.json": {
+   "version": 1,
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "main_exposed": true,
+     "clickhouse_user": "rawbbit_mcp_team_a",
+     "clickhouse_password": "pw-team_a",
+     "bearer_tokens": {
+      "agent": "tok-team_a"
+     },
+     "max_query_rows": 500,
+     "max_sample_rows": 50,
+     "max_execution_seconds": 30
+    }
+   ]
+  },
+  "schema.sql": "@canonical"
+ },
+ "steps": [
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ]
+  }
+ ],
+ "setup": [
+  "CREATE DATABASE team_a ENGINE = Memory"
+ ]
+}

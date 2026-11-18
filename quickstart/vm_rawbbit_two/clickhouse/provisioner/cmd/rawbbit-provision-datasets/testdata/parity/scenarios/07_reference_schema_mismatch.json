@@ -1,0 +1,70 @@
+{
+ "name": "reference_schema_mismatch",
+ "files": {
+  "config.json": {
+   "version": 1,
+   "main_database": "analytics",
+   "main_user": "rawbbit_mcp",
+   "admin": {
+    "host": "127.0.0.1",
+    "port": 38123,
+    "username": "admin",
+    "password": "adminpw",
+    "timeout_seconds": 15
+   },
+   "datasets": [
+    {
+     "id": "team_ref",
+     "enabled": true,
+     "mode": "reference",
+     "endpoint_path": "/datasets/team_ref/mcp",
+     "database": "team_ref",
+     "table": "events",
+     "main_exposed": false,
+     "mcp_user": "ref_user",
+     "mcp_role": "ref_role"
+    }
+   ]
+  },
+  "runtime.json": {
+   "version": 1,
+   "datasets": [
+    {
+     "id": "team_ref",
+     "enabled": true,
+     "endpoint_path": "/datasets/team_ref/mcp",
+     "database": "team_ref",
+     "table": "events",
+     "main_exposed": false,
+     "clickhouse_user": "ref_user",
+     "clickhouse_password": "ref-secret",
+     "bearer_tokens": {
+      "agent": "tok-team_ref"
+     }
+    }
+   ]
+  },
+  "schema.sql": "@canonical"
+ },
+ "steps": [
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ]
+  }
+ ],
+ "setup": [
+  "CREATE DATABASE team_ref",
+  "CREATE TABLE team_ref.events (event_id String) ENGINE = MergeTree ORDER BY event_id",
+  "CREATE USER ref_user IDENTIFIED WITH sha256_password BY 'ref-secret'",
+  "GRANT SELECT ON team_ref.events TO ref_user"
+ ]
+}

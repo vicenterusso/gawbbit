@@ -20,6 +20,10 @@ VM one.
 ## Workstation requirements
 
 - Ansible Core 2.17 or newer
+- Go 1.24 or newer: the VM-two play cross-compiles the static host helpers
+  `rawbbit-deploy-dbt-runner` and `rawbbit-provision-datasets` on the
+  workstation for the VM's architecture (`x86_64` or `aarch64`) into the
+  ignored `quickstart/ansible/.build/` directory
 - access to this repository checkout
 - SSH-key access as the manually created `deploy` user
 - the Ansible Vault password
@@ -403,8 +407,8 @@ administrator or BI/direct-user credentials.
 
 When the registry has entries, or a previous ownership journal remains,
 Ansible stages protected files, waits for ClickHouse health, then preflights and
-runs the root-owned `/srv/rawbbit-two/clickhouse/provision_datasets.py` with
-`/usr/bin/python3` and file-path arguments only. Managed ClickHouse objects are
+runs the root-owned `/srv/rawbbit-two/clickhouse/rawbbit-provision-datasets`
+binary with file-path arguments only. Managed ClickHouse objects are
 provisioned only for enabled managed datasets; the root-owned journal retains
 database/table isolation targets for all registrations, including references
 and disabled entries. An all-disabled or removed registry is checked before the

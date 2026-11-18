@@ -1,0 +1,709 @@
+{
+ "name": "runtime_validation",
+ "files": {
+  "config.json": {
+   "version": 1,
+   "main_database": "analytics",
+   "main_user": "rawbbit_mcp",
+   "admin": {
+    "host": "127.0.0.1",
+    "port": 38123,
+    "username": "admin",
+    "password": "adminpw",
+    "timeout_seconds": 15
+   },
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "mode": "managed",
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "create_table": true,
+     "main_exposed": true,
+     "mcp_user": "rawbbit_mcp_team_a",
+     "mcp_role": "rawbbit_role_team_a",
+     "mcp_password": "pw-team_a",
+     "password_revision": 1,
+     "limits": {
+      "max_query_rows": 500,
+      "max_sample_rows": 50,
+      "max_execution_seconds": 30
+     }
+    }
+   ]
+  },
+  "runtime.json": {
+   "version": 1,
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "main_exposed": true,
+     "clickhouse_user": "rawbbit_mcp_team_a",
+     "clickhouse_password": "pw-team_a",
+     "bearer_tokens": {
+      "agent": "tok-team_a"
+     },
+     "max_query_rows": 500,
+     "max_sample_rows": 50,
+     "max_execution_seconds": 30
+    }
+   ]
+  },
+  "schema.sql": "@canonical"
+ },
+ "steps": [
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": false,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      },
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "analytics",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30,
+       "extra": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {},
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "bad label": "x"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "a": " x "
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": "true",
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 0,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events2",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "other",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": false,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/mcp",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 501,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_a",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_a/other",
+       "database": "team_a",
+       "table": "events",
+       "main_exposed": true,
+       "clickhouse_user": "rawbbit_mcp_team_a",
+       "clickhouse_password": "pw-team_a",
+       "bearer_tokens": {
+        "agent": "tok-team_a"
+       },
+       "max_query_rows": 500,
+       "max_sample_rows": 50,
+       "max_execution_seconds": 30
+      }
+     ]
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": []
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": {}
+    }
+   }
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1
+    }
+   }
+  }
+ ]
+}

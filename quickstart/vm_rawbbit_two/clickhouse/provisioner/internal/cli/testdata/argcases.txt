@@ -1,0 +1,21 @@
+
+-h
+--help
+--config
+--config a --runtime-config b --schema c --journal d --bogus
+--config a --runtime b --sch c --j d
+--conf=a --runtime-config b --schema c --journal d
+--config a --config b --runtime-config b --schema c --journal d
+x --config a --runtime-config b --schema c --journal d
+--config a --runtime-config b --schema c --journal d --preflight-only=1
+--config a --runtime-config b --schema c --journal d --pre
+--config= --runtime-config b --schema c --journal d
+-- --config a
+--config -x --runtime-config b --schema c --journal d
+--config a --runtime-config b --schema c --journal d
+--config a --runtime-config b --schema c --journal d -h
+--config a -x
+--config a --runtime-config b --schema c --journal d x y
+--config a --runtime-config=--schema --schema c --journal d
+-c a
+--config a --runtime-config b --schema c --journal d --preflight-only --preflight-only

@@ -290,6 +290,52 @@
     rawbbit_two_candidate_compose_files: >-
       {{ rawbbit_two_active_compose_files | map('regex_replace', '^', rawbbit_two_stage.path ~ '/') | list }}
 
+- name: Select the Go target architecture for VM-two host helpers
+  ansible.builtin.set_fact:
+    rawbbit_two_helper_goarch: >-
+      {{ {'x86_64': 'amd64', 'aarch64': 'arm64'}.get(ansible_architecture, '') }}
+
+- name: Validate VM-two host helper architecture support
+  ansible.builtin.assert:
+    that:
+      - rawbbit_two_helper_goarch | length > 0
+    fail_msg: >-
+      VM-two host helpers are built for x86_64 and aarch64 only.
+      Detected {{ ansible_architecture }}.
+
+# The host helpers are static Go binaries. They are cross-compiled on the
+# Ansible controller (Go 1.24+ required there) so the VM needs no toolchain.
+- name: Build VM-two host helpers on the controller
+  ansible.builtin.command:
+    argv:
+      - go
+      - build
+      - -trimpath
+      - -o
+      - "{{ playbook_dir }}/.build/linux-{{ rawbbit_two_helper_goarch }}/{{ item.binary }}"
+      - "./cmd/{{ item.binary }}"
+    chdir: "{{ playbook_dir }}/../vm_rawbbit_two/{{ item.module }}"
+  environment:
+    CGO_ENABLED: "0"
+    GOOS: linux
+    GOARCH: "{{ rawbbit_two_helper_goarch }}"
+  loop:
+    - module: deployer
+      binary: rawbbit-deploy-dbt-runner
+    - module: clickhouse/provisioner
+      binary: rawbbit-provision-datasets
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+- name: Install the dbt runner deployment helper
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/.build/linux-{{ rawbbit_two_helper_goarch }}/rawbbit-deploy-dbt-runner"
+    dest: "{{ rawbbit_two_install_dir }}/rawbbit-deploy-dbt-runner"
+    owner: "{{ rawbbit_deploy_user }}"
+    group: "{{ rawbbit_deploy_user }}"
+    mode: "0755"
+
 - name: Copy required VM-two runtime artifacts
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../vm_rawbbit_two/{{ item.path }}"
@@ -301,8 +347,6 @@
     # missing first-install artifacts, then fail explicitly on existing drift.
     force: '{{ not item.path.startswith("clickhouse/") }}'
   loop:
-    - path: deploy-dbt-runner.py
-      mode: "0755"
     - path: bootstrap-host-dirs.sh
       mode: "0755"
     - path: clickhouse/config.d/raw-s3-named-collection.xml
@@ -354,16 +398,16 @@
 
 - name: Install privileged dataset provisioner and canonical schema
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../vm_rawbbit_two/clickhouse/{{ item.src }}"
+    src: "{{ item.src }}"
     dest: "{{ rawbbit_two_root }}/clickhouse/{{ item.dest }}"
     owner: root
     group: root
     mode: "{{ item.mode }}"
   loop:
-    - src: provision_datasets.py
-      dest: provision_datasets.py
+    - src: "{{ playbook_dir }}/.build/linux-{{ rawbbit_two_helper_goarch }}/rawbbit-provision-datasets"
+      dest: rawbbit-provision-datasets
       mode: "0755"
-    - src: schema_analytics_events.sql
+    - src: "{{ playbook_dir }}/../vm_rawbbit_two/clickhouse/schema_analytics_events.sql"
       dest: schema_analytics_events.sql
       mode: "0644"
   become: true
@@ -438,7 +482,7 @@
 - name: Assemble runner transaction arguments with explicit complete overlay set
   ansible.builtin.set_fact:
     rawbbit_two_dbt_deploy_argv: >-
-      {{ ['/usr/bin/python3', rawbbit_two_install_dir ~ '/deploy-dbt-runner.py',
+      {{ [rawbbit_two_install_dir ~ '/rawbbit-deploy-dbt-runner',
       '--install-dir', rawbbit_two_install_dir, '--stage-dir', rawbbit_two_stage.path,
       '--runtime-dir', rawbbit_two_root ~ '/dbt',
       '--drain-timeout', rawbbit_two_dbt_drain_timeout_seconds | string] +
@@ -612,8 +656,7 @@
 - name: Preflight dataset ownership and main-user isolation before mutation
   ansible.builtin.command:
     argv:
-      - /usr/bin/python3
-      - "{{ rawbbit_two_root }}/clickhouse/provision_datasets.py"
+      - "{{ rawbbit_two_root }}/clickhouse/rawbbit-provision-datasets"
       - --config
       - "{{ rawbbit_two_root }}/clickhouse/datasets-provision.json"
       - --runtime-config
@@ -636,8 +679,7 @@
     - name: Apply idempotent dataset provisioning
       ansible.builtin.command:
         argv:
-          - /usr/bin/python3
-          - "{{ rawbbit_two_root }}/clickhouse/provision_datasets.py"
+          - "{{ rawbbit_two_root }}/clickhouse/rawbbit-provision-datasets"
           - --config
           - "{{ rawbbit_two_root }}/clickhouse/datasets-provision.json"
           - --runtime-config

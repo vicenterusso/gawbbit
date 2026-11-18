@@ -1,0 +1,46 @@
+{
+  "steps": [
+    {
+      "exit": 1,
+      "stdout": "",
+      "stderr": "dataset provisioner: reference dataset is missing or has an incompatible events table\n",
+      "journal": null,
+      "sql": [
+        [
+          "admin",
+          "SELECT name, engine, toString(uuid) AS object_id FROM system.databases WHERE name = 'team_ref' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT database, name, toString(uuid) AS object_id, engine, partition_key, sorting_key FROM system.tables WHERE database = 'team_ref' AND name = 'events' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.roles WHERE name = 'ref_role' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.users WHERE name = 'ref_user' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT database, name, toString(uuid) AS object_id, engine, partition_key, sorting_key FROM system.tables WHERE database = 'team_ref' AND name = 'events' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, type FROM system.columns WHERE database = 'team_ref' AND table = 'events' ORDER BY position FORMAT JSONEachRow"
+        ]
+      ]
+    }
+  ],
+  "snapshot": [
+    "team_ref\tAtomic\t\u003cuuid-1\u003e\n",
+    "team_ref\tevents\tMergeTree\t\u003cuuid-2\u003e\t\tevent_id\n",
+    "team_ref\tevents\t1\n",
+    "rawbbit_mcp\t\u003cuuid-3\u003e\t1\t[]\t[]\nref_user\t\u003cuuid-4\u003e\t1\t[]\t[]\n",
+    "",
+    "rawbbit_mcp\t\\N\tSELECT\tanalytics\t\\N\t\\N\t0\t0\nref_user\t\\N\tSELECT\tteam_ref\tevents\t\\N\t0\t0\n",
+    "",
+    ""
+  ]
+}

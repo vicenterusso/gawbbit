@@ -1,0 +1,98 @@
+{
+ "name": "journal_pending_create_existing",
+ "files": {
+  "config.json": {
+   "version": 1,
+   "main_database": "analytics",
+   "main_user": "rawbbit_mcp",
+   "admin": {
+    "host": "127.0.0.1",
+    "port": 38123,
+    "username": "admin",
+    "password": "adminpw",
+    "timeout_seconds": 15
+   },
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "mode": "managed",
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "create_table": true,
+     "main_exposed": true,
+     "mcp_user": "rawbbit_mcp_team_a",
+     "mcp_role": "rawbbit_role_team_a",
+     "mcp_password": "pw-team_a",
+     "password_revision": 1,
+     "limits": {
+      "max_query_rows": 500,
+      "max_sample_rows": 50,
+      "max_execution_seconds": 30
+     }
+    }
+   ]
+  },
+  "runtime.json": {
+   "version": 1,
+   "datasets": [
+    {
+     "id": "team_a",
+     "enabled": true,
+     "endpoint_path": "/datasets/team_a/mcp",
+     "database": "team_a",
+     "table": "events",
+     "main_exposed": true,
+     "clickhouse_user": "rawbbit_mcp_team_a",
+     "clickhouse_password": "pw-team_a",
+     "bearer_tokens": {
+      "agent": "tok-team_a"
+     },
+     "max_query_rows": 500,
+     "max_sample_rows": 50,
+     "max_execution_seconds": 30
+    }
+   ]
+  },
+  "schema.sql": "@canonical",
+  "journal.json": {
+   "version": 1,
+   "datasets": {
+    "team_a": {
+     "database": "team_a",
+     "table": "events",
+     "role": "rawbbit_role_team_a",
+     "user": "rawbbit_mcp_team_a",
+     "privileges": [
+      "SELECT"
+     ],
+     "schema_fingerprint": "@fingerprint",
+     "object_ids": {},
+     "password_revision": 1,
+     "state": "pending",
+     "pending_action": "create_table"
+    }
+   }
+  }
+ },
+ "steps": [
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ]
+  }
+ ],
+ "setup": [
+  "CREATE DATABASE team_a",
+  "CREATE TABLE IF NOT EXISTS team_a.events\n(\n    event_id Nullable(String),\n    app_id LowCardinality(String),\n    environment LowCardinality(String),\n    event_name LowCardinality(String),\n\n    event_time DateTime64(3, 'UTC'),\n    event_date Date,\n\n    received_time Nullable(DateTime64(3, 'UTC')),\n    user_id Nullable(String),\n    user_pseudo_id String,\n    session_id Nullable(String),\n    platform LowCardinality(Nullable(String)),\n    app_version Nullable(String),\n    os_version Nullable(String),\n    device_model Nullable(String),\n    locale Nullable(String),\n    timezone Nullable(String),\n    event_params_json Nullable(String),\n    user_properties_json Nullable(String),\n    traffic_source_json Nullable(String),\n    geo_json Nullable(String),\n    consent_json Nullable(String),\n\n    ingest_request_id Nullable(String),\n    ingest_user_agent Nullable(String),\n    ingest_ip_hash Nullable(String),\n    nats_stream Nullable(String),\n    nats_sequence Nullable(Int64)\n)\nENGINE=MergeTree\nPARTITION BY toYYYYMM(event_date)\nORDER BY (app_id, environment, event_name, event_date, user_pseudo_id, event_time)"
+ ]
+}

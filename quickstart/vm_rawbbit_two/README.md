@@ -98,19 +98,16 @@ quickstart/vm_rawbbit_two/
   Caddyfile.dozzle.example
   bootstrap-host-dirs.sh
   install-hourly-loader-cron.sh
-  ../../dbt_project/
+  ../../dbt_project/          # Go ingestion runner (dbt is no longer used)
     Dockerfile
-    dbt_project.yml
-    profiles.yml
-    selectors.yml
+    go.mod
+    go.sum
+    cmd/dbt-job/
+    internal/
     crontab
-    bin/dbt-job
-    models/
-    macros/
-    tests/
+  deployer/                   # Go source of the rawbbit-deploy-dbt-runner host helper
   clickhouse/
-    provision_datasets.py      # host-side, privileged dataset provisioner
-    tests/
+    provisioner/              # Go source of the rawbbit-provision-datasets host helper
     config.d/
       low-memory.xml
       production-small.xml
@@ -219,7 +216,9 @@ timedatectl set-timezone UTC
 
 The host does not initially need:
 
-- Python or pip
+- Python, pip, or a Go toolchain (the Ansible controller cross-compiles the
+  static host helpers `rawbbit-deploy-dbt-runner` and
+  `rawbbit-provision-datasets`; it needs Go 1.24+)
 - Node.js or Java
 - a host-level Caddy package
 - a host-level ClickHouse package
@@ -1069,8 +1068,8 @@ Provision and activate in this order:
      --schema /srv/rawbbit-two/clickhouse/schema_analytics_events.sql
      --journal /srv/rawbbit-two/clickhouse/datasets-ownership.json
    )
-   sudo /usr/bin/python3 /srv/rawbbit-two/clickhouse/provision_datasets.py "${dataset_args[@]}" --preflight-only
-   sudo /usr/bin/python3 /srv/rawbbit-two/clickhouse/provision_datasets.py "${dataset_args[@]}"
+   sudo /srv/rawbbit-two/clickhouse/rawbbit-provision-datasets "${dataset_args[@]}" --preflight-only
+   sudo /srv/rawbbit-two/clickhouse/rawbbit-provision-datasets "${dataset_args[@]}"
    ```
 
    `managed` mode applies only journal-owned objects; `reference` mode only
@@ -1208,8 +1207,9 @@ longer range for late files. Supercronic does not replay missed ticks; these
 overlapping windows provide the recovery path.
 
 The selected model uses `(app_id, event_id)` as its stable replacement key and
-dbt-clickhouse's `delete_insert` incremental strategy. `dbt build` then runs
-the ingestion data tests. The current project has only this ingestion model;
+the same delete-then-insert incremental strategy that dbt-clickhouse's
+`delete_insert` used; the Go runner issues that SQL directly and then runs the
+ingestion data tests (dbt itself is no longer installed). The current project has only this ingestion model;
 it does not yet create staging or mart tables.
 
 An hour with no matching Parquet files succeeds with zero input rows. S3
@@ -1424,9 +1424,9 @@ Verify own tagged-query cancellation permissions on the installed ClickHouse
 version; do not grant global cancellation merely to bypass a fence. Deployment
 runs `dbt-job verify-control` while the gate is closed and before releasing it.
 Missing observation access fails closed. The host deployment helper records a
-verified `deploy-fence.json` before removing the gate. Request ownership is pinned to
-`dbt-clickhouse==1.9.8` and `clickhouse-connect==1.6.0`; upgrading either requires
-rerunning the disposable query-ID/cancellation tests.
+verified `deploy-fence.json` before removing the gate. Request ownership is implemented by the Go runner's own ClickHouse HTTP
+client; changing it requires rerunning the disposable query-ID/cancellation
+integration tests (`go test -tags integration ./internal/runner/`).
 
 #### Fresh VM-two installation
 
@@ -1482,7 +1482,7 @@ maintenance window; **do not force-stop a running load**:
 
    ```bash
    cd /home/deploy/rawbbit-two
-   test -f .dbt-build-context/runner/runner.py &&
+   test -f .dbt-build-context/cmd/dbt-job/main.go &&
    docker build --build-arg DBT_UID="$(id -u)" --build-arg DBT_GID="$(id -g)" \
      -t rawbbit-dbt-runner:local .dbt-build-context
    ```
@@ -1540,7 +1540,7 @@ maintenance window; **do not force-stop a running load**:
    ```bash
    cd /home/deploy/rawbbit-two
    stage=/home/deploy/rawbbit-two/.dbt-deploy-REPLACE_WITH_VALIDATED_CANDIDATE
-   check=(python3 ./deploy-dbt-runner.py --install-dir "$PWD" --stage-dir "$stage"
+   check=(./rawbbit-deploy-dbt-runner --install-dir "$PWD" --stage-dir "$stage"
      --runtime-dir /srv/rawbbit-two/dbt --compose-file docker-compose.yml
      --compose-file docker-compose.dozzle.yml --compose-file docker-compose.datasets.yml
      --check-quiescence)

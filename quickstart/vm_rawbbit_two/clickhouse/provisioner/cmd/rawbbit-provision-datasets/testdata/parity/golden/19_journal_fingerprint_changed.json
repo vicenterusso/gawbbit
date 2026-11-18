@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "exit": 1,
+      "stdout": "",
+      "stderr": "dataset provisioner: canonical schema fingerprint changed for an owned dataset; operator review is required\n",
+      "journal": "{\n   \"version\": 1,\n   \"datasets\": {\n    \"team_a\": {\n     \"database\": \"team_a\",\n     \"table\": \"events\",\n     \"role\": \"rawbbit_role_team_a\",\n     \"user\": \"rawbbit_mcp_team_a\",\n     \"privileges\": [\n      \"SELECT\"\n     ],\n     \"schema_fingerprint\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n     \"object_ids\": {},\n     \"password_revision\": 1,\n     \"state\": \"pending\",\n     \"pending_action\": null\n    }\n   }\n  }",
+      "sql": []
+    }
+  ],
+  "snapshot": [
+    "",
+    "",
+    "",
+    "rawbbit_mcp\t\u003cuuid-1\u003e\t1\t[]\t[]\n",
+    "",
+    "rawbbit_mcp\t\\N\tSELECT\tanalytics\t\\N\t\\N\t0\t0\n",
+    "",
+    ""
+  ]
+}

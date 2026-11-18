@@ -1,0 +1,197 @@
+{
+ "name": "reference_dataset",
+ "files": {
+  "config.json": {
+   "version": 1,
+   "main_database": "analytics",
+   "main_user": "rawbbit_mcp",
+   "admin": {
+    "host": "127.0.0.1",
+    "port": 38123,
+    "username": "admin",
+    "password": "adminpw",
+    "timeout_seconds": 15
+   },
+   "datasets": [
+    {
+     "id": "team_ref",
+     "enabled": true,
+     "mode": "reference",
+     "endpoint_path": "/datasets/team_ref/mcp",
+     "database": "team_ref",
+     "table": "events",
+     "main_exposed": false,
+     "mcp_user": "ref_user",
+     "mcp_role": "ref_role"
+    }
+   ]
+  },
+  "runtime.json": {
+   "version": 1,
+   "datasets": [
+    {
+     "id": "team_ref",
+     "enabled": true,
+     "endpoint_path": "/datasets/team_ref/mcp",
+     "database": "team_ref",
+     "table": "events",
+     "main_exposed": false,
+     "clickhouse_user": "ref_user",
+     "clickhouse_password": "ref-secret",
+     "bearer_tokens": {
+      "agent": "tok-team_ref"
+     }
+    }
+   ]
+  },
+  "schema.sql": "@canonical"
+ },
+ "steps": [
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json",
+    "--preflight-only"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "before": [
+    "CREATE ROLE ref_reader",
+    "GRANT SELECT ON team_ref.events TO ref_reader",
+    "GRANT ref_reader TO ref_user"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "before": [
+    "GRANT SELECT ON team_ref.* TO ref_reader"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "before": [
+    "REVOKE SELECT ON team_ref.* FROM ref_reader",
+    "GRANT SELECT ON team_ref.events TO ref_reader",
+    "CREATE ROLE ref_nested",
+    "GRANT ref_nested TO ref_reader"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "before": [
+    "REVOKE ref_nested FROM ref_reader",
+    "GRANT ref_reader TO ref_user WITH ADMIN OPTION"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "before": [
+    "REVOKE ref_reader FROM ref_user",
+    "GRANT ref_reader TO ref_user",
+    "GRANT SELECT ON team_ref.* TO ref_user"
+   ]
+  },
+  {
+   "args": [
+    "--config",
+    "@dir/config.json",
+    "--runtime-config",
+    "@dir/runtime.json",
+    "--schema",
+    "@dir/schema.sql",
+    "--journal",
+    "@dir/journal.json"
+   ],
+   "files": {
+    "runtime.json": {
+     "version": 1,
+     "datasets": [
+      {
+       "id": "team_ref",
+       "enabled": true,
+       "endpoint_path": "/datasets/team_ref/mcp",
+       "database": "team_ref",
+       "table": "events",
+       "main_exposed": false,
+       "clickhouse_user": "ref_user",
+       "clickhouse_password": "wrong",
+       "bearer_tokens": {
+        "agent": "tok-team_ref"
+       }
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "setup": [
+  "CREATE DATABASE team_ref",
+  "CREATE TABLE IF NOT EXISTS team_ref.events\n(\n    event_id Nullable(String),\n    app_id LowCardinality(String),\n    environment LowCardinality(String),\n    event_name LowCardinality(String),\n\n    event_time DateTime64(3, 'UTC'),\n    event_date Date,\n\n    received_time Nullable(DateTime64(3, 'UTC')),\n    user_id Nullable(String),\n    user_pseudo_id String,\n    session_id Nullable(String),\n    platform LowCardinality(Nullable(String)),\n    app_version Nullable(String),\n    os_version Nullable(String),\n    device_model Nullable(String),\n    locale Nullable(String),\n    timezone Nullable(String),\n    event_params_json Nullable(String),\n    user_properties_json Nullable(String),\n    traffic_source_json Nullable(String),\n    geo_json Nullable(String),\n    consent_json Nullable(String),\n\n    ingest_request_id Nullable(String),\n    ingest_user_agent Nullable(String),\n    ingest_ip_hash Nullable(String),\n    nats_stream Nullable(String),\n    nats_sequence Nullable(Int64)\n)\nENGINE=MergeTree\nPARTITION BY toYYYYMM(event_date)\nORDER BY (app_id, environment, event_name, event_date, user_pseudo_id, event_time)",
+  "CREATE USER ref_user IDENTIFIED WITH sha256_password BY 'ref-secret'",
+  "GRANT SELECT ON team_ref.events TO ref_user"
+ ]
+}

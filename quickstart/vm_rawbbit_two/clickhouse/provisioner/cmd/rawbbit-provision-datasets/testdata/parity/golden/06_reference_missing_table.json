@@ -1,0 +1,38 @@
+{
+  "steps": [
+    {
+      "exit": 1,
+      "stdout": "",
+      "stderr": "dataset provisioner: reference dataset is missing or has an incompatible events table\n",
+      "journal": null,
+      "sql": [
+        [
+          "admin",
+          "SELECT name, engine, toString(uuid) AS object_id FROM system.databases WHERE name = 'team_ref' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT database, name, toString(uuid) AS object_id, engine, partition_key, sorting_key FROM system.tables WHERE database = 'team_ref' AND name = 'events' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.roles WHERE name = 'ref_role' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.users WHERE name = 'ref_user' FORMAT JSONEachRow"
+        ]
+      ]
+    }
+  ],
+  "snapshot": [
+    "team_ref\tAtomic\t\u003cuuid-1\u003e\n",
+    "",
+    "",
+    "rawbbit_mcp\t\u003cuuid-2\u003e\t1\t[]\t[]\nref_user\t\u003cuuid-3\u003e\t1\t[]\t[]\n",
+    "",
+    "rawbbit_mcp\t\\N\tSELECT\tanalytics\t\\N\t\\N\t0\t0\n",
+    "",
+    ""
+  ]
+}

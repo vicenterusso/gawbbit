@@ -1,0 +1,38 @@
+{
+  "steps": [
+    {
+      "exit": 1,
+      "stdout": "",
+      "stderr": "dataset provisioner: managed dataset adoption requires an Atomic database with a non-nil UUID\n",
+      "journal": null,
+      "sql": [
+        [
+          "admin",
+          "SELECT name, engine, toString(uuid) AS object_id FROM system.databases WHERE name = 'team_a' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT database, name, toString(uuid) AS object_id, engine, partition_key, sorting_key FROM system.tables WHERE database = 'team_a' AND name = 'events' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.roles WHERE name = 'rawbbit_role_team_a' FORMAT JSONEachRow"
+        ],
+        [
+          "admin",
+          "SELECT name, toString(id) AS object_id FROM system.users WHERE name = 'rawbbit_mcp_team_a' FORMAT JSONEachRow"
+        ]
+      ]
+    }
+  ],
+  "snapshot": [
+    "team_a\tMemory\t00000000-0000-0000-0000-000000000000\n",
+    "",
+    "",
+    "rawbbit_mcp\t\u003cuuid-1\u003e\t1\t[]\t[]\n",
+    "",
+    "rawbbit_mcp\t\\N\tSELECT\tanalytics\t\\N\t\\N\t0\t0\n",
+    "",
+    ""
+  ]
+}
