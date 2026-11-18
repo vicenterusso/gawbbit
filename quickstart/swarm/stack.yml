@@ -193,7 +193,7 @@ services:
       server
       -ip=seaweedfs
       -ip.bind=0.0.0.0
-      -master.volumeSizeLimitMB=${SEAWEED_VOLUME_SIZE_LIMIT_MB:-5000}
+      -master.volumeSizeLimitMB=${SEAWEED_VOLUME_SIZE_LIMIT_MB:-1024}
       -volume.max=${SEAWEED_VOLUME_MAX:-0}
       -volume.minFreeSpace=${SEAWEED_VOLUME_MIN_FREE_SPACE_GB:-5}
       -volume.preStopSeconds=1
