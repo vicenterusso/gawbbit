@@ -2073,7 +2073,8 @@
    "tool": "run_readonly_sql",
    "args": {
     "sql": "SELECT number, toString(number) s FROM numbers(3) UNION ALL SELECT 10, 'x'"
-   }
+   },
+   "unordered": true
   },
   {
    "kind": "call",

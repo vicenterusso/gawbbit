@@ -56,6 +56,9 @@ type parityCase struct {
 	// rewrite notes"): the golden holds the Python output and Go must differ
 	// in the documented way.
 	Divergent string `json:"divergent,omitempty"`
+	// Unordered marks a query without ORDER BY (e.g. UNION ALL): ClickHouse
+	// may return its rows in any order, so rows are compared as a multiset.
+	Unordered bool `json:"unordered,omitempty"`
 }
 
 type parityConfig struct {
@@ -374,6 +377,9 @@ func TestMCPParity(t *testing.T) {
 					}
 					continue
 				}
+				if c.Unordered {
+					want[i], g = sortRows(want[i]), sortRows(g)
+				}
 				wj, _ := json.Marshal(want[i])
 				gj, _ := json.Marshal(g)
 				if string(wj) != string(gj) {
@@ -414,4 +420,47 @@ func checkDivergent(kind string, python, goResult any) error {
 		}
 	}
 	return nil
+}
+
+// sortRows orders a tool result's structuredContent.result rows and the
+// matching JSON text content, for queries whose row order is unspecified.
+func sortRows(v any) any {
+	m, ok := v.(map[string]any)
+	if !ok {
+		return v
+	}
+	byJSON := func(rows []any) []any {
+		keyed := make([]string, len(rows))
+		for i, r := range rows {
+			b, _ := json.Marshal(r)
+			keyed[i] = string(b)
+		}
+		sort.Strings(keyed)
+		out := make([]any, len(rows))
+		for i, k := range keyed {
+			_ = json.Unmarshal([]byte(k), &out[i])
+		}
+		return out
+	}
+	out := map[string]any{}
+	for k, val := range m {
+		out[k] = val
+	}
+	if sc, ok := m["structuredContent"].(map[string]any); ok {
+		if rows, ok := sc["result"].([]any); ok {
+			out["structuredContent"] = map[string]any{"result": byJSON(rows)}
+		}
+	}
+	if content, ok := m["content"].([]any); ok && len(content) == 1 {
+		if item, ok := content[0].(map[string]any); ok {
+			if text, ok := item["text"].(string); ok {
+				var rows []any
+				if json.Unmarshal([]byte(text), &rows) == nil {
+					b, _ := json.Marshal(byJSON(rows))
+					out["content"] = []any{map[string]any{"type": item["type"], "text": string(b)}}
+				}
+			}
+		}
+	}
+	return out
 }
