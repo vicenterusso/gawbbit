@@ -40,7 +40,8 @@ These settings control the durable buffer between ingress and raw storage.
 Main variables:
 
 - `PORT`
-- `UVICORN_WORKERS` (default `1`)
+- `UVICORN_WORKERS`: accepted for compatibility and ignored; the Go collector serves all cores from one process
+- `FORWARDED_ALLOW_IPS` (default `127.0.0.1`): peers whose `X-Forwarded-For`/`X-Forwarded-Proto` headers are trusted
 - `NATS_MAX_INFLIGHT_PUBLISHES` (default `512`)
 - `COLLECTOR_API_KEYS_JSON`
 - `MAX_EVENTS_PER_REQUEST`
@@ -58,7 +59,7 @@ Main variables:
 Notes:
 
 - `COLLECTOR_API_KEYS_JSON` is a JSON map of `{ "api_key": "app_id" }`
-- the collector publishes a batch's events concurrently, up to `NATS_MAX_INFLIGHT_PUBLISHES` per worker process; if any event fails, the whole request returns `503` and is safe to retry, because JetStream deduplicates on `Nats-Msg-Id` (`<app_id>:<event_id>`) within `NATS_DUPLICATE_WINDOW_SECONDS`
+- the collector publishes a batch's events concurrently, up to `NATS_MAX_INFLIGHT_PUBLISHES` per process; if any event fails, the whole request returns `503` and is safe to retry, because JetStream deduplicates on `Nats-Msg-Id` (`<app_id>:<event_id>`) within `NATS_DUPLICATE_WINDOW_SECONDS`
 - event order within a batch is not preserved in the stream
 - browser ingestion requires correct HTTPS and CORS configuration
 - API keys, salts, and credentials should come from private environment or secret management, not committed files
@@ -150,14 +151,14 @@ The raw layer stays intentionally simple and mostly string-typed for compatibili
 
 ## ClickHouse dbt ingestion settings
 
-The VM-two quickstart has a separate `.env.example` for its ClickHouse and dbt
+The VM-two quickstart has a separate `.env.example` for its ClickHouse and ingestion-runner
 runtime. The main dbt settings are:
 
 - `RAWBBIT_RAW_LOAD_MODE` (`dbt` or `legacy`)
 - `DBT_RUNNER_IMAGE`
 - `DBT_RUNNER_UID`
 - `DBT_RUNNER_GID`
-- `DBT_THREADS`
+- `DBT_THREADS` (accepted and ignored by the Go runner, which runs statements sequentially)
 - `DBT_CLICKHOUSE_MAX_THREADS`
 - `RAWBBIT_DBT_HOURLY_LOOKBACK_HOURS`
 - `RAWBBIT_DBT_DAILY_LOOKBACK_DAYS`

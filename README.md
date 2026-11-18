@@ -66,7 +66,7 @@ This repository contains the public game-telemetry ingestion-to-analytics path:
 - `backend/collector-api` — HTTP ingestion service for player, gameplay, product, and server events
 - `backend/raw-writer` — JetStream consumer that writes partitioned Parquet files
 - `clickhouse/` — main analytical/query path for loading and querying raw game telemetry in ClickHouse
-- `dbt_project/` — scheduled dbt Core ingestion from bounded Parquet windows into `analytics.events`
+- `dbt_project/` — scheduled ingestion runner (Go; formerly dbt Core) that loads bounded Parquet windows into `analytics.events`
 - `mcp-server/` — Rawbbit MCP server, MCP client setup, and combined MCP + Metabase deployment guide
 - AI agents and MCP clients such as Codex, OpenCode, and OpenClaw can connect to the Rawbbit MCP server endpoint for read-only analytics exploration
 - `metabase/` — optional standalone Metabase deployment guide
@@ -123,7 +123,32 @@ The shortest path to a working ingestion setup is:
 For the test event and landing check, see
 [VM-one verification](quickstart/vm_rawbbit_one/README.md#verification).
 
+## Implementation language
+
+All Rawbbit services and host helpers are written in Go: collector-api,
+raw-writer, the MCP server, the scheduled ingestion runner (`dbt_project/`,
+which no longer uses dbt), and the VM-two host helpers
+`rawbbit-deploy-dbt-runner` and `rawbbit-provision-datasets`. Each is a
+separate Go module that builds as a static `CGO_ENABLED=0` binary for
+`linux/amd64` and `linux/arm64` (for example OCI Ampere A1). The Dockerfiles
+use `TARGETOS`/`TARGETARCH`, so multi-arch images can be built with
+`docker buildx build --platform linux/amd64,linux/arm64 ...`.
+
+The Go versions keep the previous Python services' environment variables,
+ports, HTTP/MCP contracts, NATS messages, Parquet layout, SQL and CLI
+behavior. Parity was checked by differential testing against the Python
+implementation, and the recorded Python outputs are kept as goldens in each
+module's `testdata/`. Deliberate differences are listed in each component
+README under "Go rewrite notes".
+
+The optional `sqlmesh_project/` remains a configuration for the third-party
+SQLMesh tool (itself a Python application); it contains no Rawbbit Python code.
+
 ## Published images
+
+The image tags listed below were built from the previous Python
+implementation and are `linux/amd64` only. Go images have not been published
+yet.
 
 Rawbbit public service images use GHCR:
 
@@ -200,7 +225,7 @@ backend/
   raw-writer/      Parquet landing worker
 sqlmesh_project/   Optional BigQuery SQLMesh starter model
 clickhouse/        Main ClickHouse query/loading path
-dbt_project/       Scheduled ClickHouse ingestion project
+dbt_project/       Scheduled ClickHouse ingestion runner (Go)
 mcp-server/        Rawbbit MCP server and optional Metabase deploy path
 metabase/          Metabase OSS ver. deploy instructions
 sdk/rawbbit-unity/ Copy-in Unity SDK source, integration guide, and tests
@@ -232,8 +257,8 @@ Current maturity:
 - raw Parquet landing path is implemented
 - raw storage backend selection is implemented for both GCS and S3-compatible targets
 - SeaweedFS/S3-compatible storage is the preferred OSS raw-storage path
-- scheduled dbt loading from raw Parquet into ClickHouse is the main analytical/query path for player telemetry; the legacy shell loader remains available for rollback
-- the current dbt project contains one ingestion model plus data tests; staging and mart models are intentionally deferred until their requirements are defined
+- scheduled loading from raw Parquet into ClickHouse by the Go ingestion runner is the main analytical/query path for player telemetry; the legacy shell loader remains available for rollback
+- the runner contains one ingestion model plus data tests; staging and mart models are intentionally deferred until their requirements are defined
 - Rawbbit MCP server can expose a read-only analytical tool surface over a configured Rawbbit ClickHouse events table
 - AI agents and MCP clients can use that MCP surface without direct access to the ingestion runtime
 - Metabase can be deployed separately or together with the Rawbbit MCP server package

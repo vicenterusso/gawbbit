@@ -58,3 +58,5 @@ quickstart/ansible/.vault-pass
 quickstart/vm_rawbbit_one/geoip/*.mmdb
 
 .ansible/
+# Ansible controller-built Go host helpers
+quickstart/ansible/.build/

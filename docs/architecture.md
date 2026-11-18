@@ -78,9 +78,10 @@ This layer:
 ClickHouse is the main analytical database and serving layer over raw Parquet.
 
 ClickHouse is not the ingestion source of truth. The durable boundary remains
-raw Parquet. A persistent dbt Core runner loads bounded Parquet windows into
-the local `analytics.events` `MergeTree` table and runs ingestion data tests.
-The current dbt project contains one ingestion model; staging and mart models
+raw Parquet. A persistent Go ingestion runner (`dbt_project/`, which replaced dbt Core
+while keeping its SQL) loads bounded Parquet windows into the local
+`analytics.events` `MergeTree` table and runs ingestion data tests. It
+contains one ingestion model; staging and mart models
 can be added later when their grains and consumers are defined.
 
 The runner processes a short overlapping window hourly and reconciles a longer
@@ -89,9 +90,9 @@ ranges and smaller chunks. All dbt jobs and the legacy shell loader share one
 lock, while `RAWBBIT_RAW_LOAD_MODE` gives exactly one path ownership of raw
 ingestion.
 
-Within each selected window, dbt keeps one winner per `(app_id, event_id)` and
-uses the ClickHouse adapter's `delete_insert` incremental strategy to replace
-matching keys. This makes overlapping schedules and replayed windows safe at
+Within each selected window, the runner keeps one winner per
+`(app_id, event_id)` and uses the same delete-then-insert incremental strategy
+as dbt-clickhouse's `delete_insert` to replace matching keys. This makes overlapping schedules and replayed windows safe at
 the event-key level. The legacy hourly shell loader remains available as a
 mutually exclusive rollback path.
 
