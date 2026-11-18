@@ -278,6 +278,9 @@ services:
       - source: clickhouse_service_users
         target: /docker-entrypoint-initdb.d/02_service_users.sh
         mode: 0555
+      - source: clickhouse_dbt_observation_grants
+        target: /docker-entrypoint-initdb.d/03_dbt_observation_grants.sh
+        mode: 0555
     volumes:
       - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/data:/var/lib/clickhouse
       - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/logs:/var/log/clickhouse-server
@@ -455,6 +458,9 @@ configs:
   clickhouse_service_users:
     name: ${CFG_CLICKHOUSE_SERVICE_USERS:?run ./deploy.sh}
     file: ../vm_rawbbit_two/clickhouse/initdb.d/02_service_users.sh
+  clickhouse_dbt_observation_grants:
+    name: ${CFG_CLICKHOUSE_DBT_OBSERVATION_GRANTS:?run ./deploy.sh}
+    file: ./clickhouse/03_dbt_observation_grants.sh
   postgres_metabase_init:
     name: ${CFG_POSTGRES_METABASE_INIT:?run ./deploy.sh}
     file: ../vm_rawbbit_two/postgres/initdb.d/01_metabase_database.sh

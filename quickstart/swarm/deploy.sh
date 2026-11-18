@@ -109,6 +109,7 @@ declare -A objects=(
   [CFG_CLICKHOUSE_USERS_PROFILE]="$ch/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}"
   [CFG_CLICKHOUSE_SCHEMA]="$ch/schema_analytics_events.sql"
   [CFG_CLICKHOUSE_SERVICE_USERS]="$ch/initdb.d/02_service_users.sh"
+  [CFG_CLICKHOUSE_DBT_OBSERVATION_GRANTS]=./clickhouse/03_dbt_observation_grants.sh
   [CFG_POSTGRES_METABASE_INIT]=../vm_rawbbit_two/postgres/initdb.d/01_metabase_database.sh
   [SECRET_SEAWEED_S3_JSON]=./.generated/seaweedfs-s3.json
 )
