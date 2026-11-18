@@ -14,7 +14,7 @@ Producer -> Caddy -> collector-api (N replicas) -> NATS JetStream -> raw-writer
 |---|---|---|
 | `caddy` | 1 | data node (TLS certificates on disk, host-mode ports 80/443) |
 | `nats` | 1 | data node (JetStream store) |
-| `seaweed-master`, `seaweed-volume`, `seaweed-filer`, `seaweed-s3` | 1 each | data node |
+| `seaweedfs` | 1 | data node (master, volume, filer and S3 gateway in one `weed server` process) |
 | `seaweed-bucket-init` | one-shot job | data node |
 | `clickhouse` | 1 | data node |
 | `postgres` | 1 | data node (Metabase state) |
@@ -124,9 +124,9 @@ replicas on all nodes.
    `RAW_FLUSH_INTERVAL_SECONDS`; check it on the data node with:
 
    ```bash
-   c=$(docker ps -q -f name=rawbbit_seaweed-master)
+   c=$(docker ps -q -f name=rawbbit_seaweedfs)
    echo "fs.ls -l /buckets/rawbbit-raw/raw" |
-     docker exec -i "$c" weed shell -master=seaweed-master:9333 -filer=seaweed-filer:8888
+     docker exec -i "$c" weed shell -master=localhost:9333 -filer=localhost:8888
    ```
 
    The runner loads it at minute 12 of each hour. To load now:
@@ -185,7 +185,7 @@ Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
   encrypted overlay network. No `127.0.0.1` ports are published (Swarm cannot
   bind to loopback). For ClickHouse IDE access, add a Caddy block (see
   [`Caddyfile`](Caddyfile)) or use `docker exec` into the ClickHouse task.
-- ClickHouse reads raw Parquet from `http://seaweed-s3:8333/<bucket>/<prefix>/`
+- ClickHouse reads raw Parquet from `http://seaweedfs:8333/<bucket>/<prefix>/`
   inside the cluster; the S3 endpoint is not published.
 - `RAWBBIT_RAW_LOAD_MODE` defaults to `dbt`: the runner owns raw ingestion and
   the host cron shell loader is not used.
@@ -214,6 +214,6 @@ Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
 | `bootstrap-data-node.sh` | host directories |
 | `Caddyfile` | public routes: collector, MCP, Metabase |
 
-The NATS, SeaweedFS, ClickHouse and Postgres config files are shared with
+The NATS, ClickHouse and Postgres config files are shared with
 [`../vm_rawbbit_one`](../vm_rawbbit_one) and
 [`../vm_rawbbit_two`](../vm_rawbbit_two).

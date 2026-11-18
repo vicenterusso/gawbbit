@@ -38,7 +38,7 @@ for dir in \
   echo "created_or_verified ${dir}"
 done
 
-for dir in "${ROOT_DIR}/seaweedfs/master" "${ROOT_DIR}/seaweedfs/volume" "${ROOT_DIR}/seaweedfs/filerldb2"; do
+for dir in "${ROOT_DIR}/seaweedfs"; do
   install -d -m 0755 -o "${SEAWEED_UID}" -g "${SEAWEED_GID}" "${dir}"
   echo "created_or_verified ${dir} owner=${SEAWEED_UID}:${SEAWEED_GID}"
 done

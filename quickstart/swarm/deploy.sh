@@ -104,7 +104,6 @@ ch="../vm_rawbbit_two/clickhouse"
 declare -A objects=(
   [CFG_CADDYFILE]=./Caddyfile
   [CFG_NATS_CONF]=../vm_rawbbit_one/nats-server.conf
-  [CFG_SEAWEED_FILER]=../vm_rawbbit_one/seaweedfs/filer.toml
   [CFG_CLICKHOUSE_RESOURCE_PROFILE]="$ch/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}"
   [CFG_CLICKHOUSE_NAMED_COLLECTION]="$ch/config.d/raw-s3-named-collection.xml"
   [CFG_CLICKHOUSE_USERS_PROFILE]="$ch/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}"

@@ -45,7 +45,7 @@ services:
       # Source: SeaweedFS with the read-only credential.
       RCLONE_CONFIG_SRC_TYPE: s3
       RCLONE_CONFIG_SRC_PROVIDER: SeaweedFS
-      RCLONE_CONFIG_SRC_ENDPOINT: http://seaweed-s3:8333
+      RCLONE_CONFIG_SRC_ENDPOINT: http://seaweedfs:8333
       RCLONE_CONFIG_SRC_ACCESS_KEY_ID: ${S3_READER_ACCESS_KEY:?S3_READER_ACCESS_KEY is required}
       RCLONE_CONFIG_SRC_SECRET_ACCESS_KEY: ${S3_READER_SECRET_KEY:?S3_READER_SECRET_KEY is required}
       RCLONE_CONFIG_SRC_FORCE_PATH_STYLE: "true"

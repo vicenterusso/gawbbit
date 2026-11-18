@@ -161,7 +161,7 @@ services:
       RAW_MAX_BYTES_PER_FILE: ${RAW_MAX_BYTES_PER_FILE:-52428800}
       RAW_MAX_BUFFERED_EVENTS: ${RAW_MAX_BUFFERED_EVENTS:-}
       RAW_STORAGE_BACKEND: s3
-      S3_ENDPOINT_URL: http://seaweed-s3:8333
+      S3_ENDPOINT_URL: http://seaweedfs:8333
       S3_BUCKET: ${S3_BUCKET:-rawbbit-raw}
       S3_PREFIX: ${S3_PREFIX:-raw}
       S3_ACCESS_KEY: ${S3_WRITER_ACCESS_KEY:?S3_WRITER_ACCESS_KEY is required}
@@ -184,85 +184,29 @@ services:
         order: stop-first
 
   # ------------------------------------------------- raw object storage
-  seaweed-master:
+  # One process runs the SeaweedFS master, volume server, filer and S3
+  # gateway. The image entrypoint adds -dir=/data; master metadata, volumes and
+  # the filer's leveldb2 store all live in that one directory.
+  seaweedfs:
     image: *seaweedfs-image
     command: >
-      master
-      -ip=seaweed-master
+      server
+      -ip=seaweedfs
       -ip.bind=0.0.0.0
-      -port=9333
-      -mdir=/data/seaweedfs/master
-      -volumeSizeLimitMB=${SEAWEED_VOLUME_SIZE_LIMIT_MB:-5000}
-    logging: *logging
-    volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/seaweedfs/master:/data/seaweedfs/master
-    networks:
-      - rawbbit
-    deploy:
-      replicas: 1
-      placement: *data-node
-      restart_policy: *restart
-      update_config:
-        order: stop-first
-
-  seaweed-volume:
-    image: *seaweedfs-image
-    command: >
-      volume
-      -master=seaweed-master:9333
-      -ip=seaweed-volume
-      -ip.bind=0.0.0.0
-      -port=8080
-      -dir=/data/seaweedfs/volume
-      -max=${SEAWEED_VOLUME_MAX:-0}
-      -minFreeSpace=${SEAWEED_VOLUME_MIN_FREE_SPACE_GB:-5}
-      -preStopSeconds=1
-    logging: *logging
-    volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/seaweedfs/volume:/data/seaweedfs/volume
-    networks:
-      - rawbbit
-    deploy:
-      replicas: 1
-      placement: *data-node
-      restart_policy: *restart
-      update_config:
-        order: stop-first
-
-  seaweed-filer:
-    image: *seaweedfs-image
-    command: >
-      filer
-      -master=seaweed-master:9333
-      -ip=seaweed-filer
-      -ip.bind=0.0.0.0
-      -port=8888
-    logging: *logging
-    configs:
-      - source: seaweed_filer
-        target: /etc/seaweedfs/filer.toml
-    volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/seaweedfs/filerldb2:/data/seaweedfs/filerldb2
-    networks:
-      - rawbbit
-    deploy:
-      replicas: 1
-      placement: *data-node
-      restart_policy: *restart
-      update_config:
-        order: stop-first
-
-  seaweed-s3:
-    image: *seaweedfs-image
-    command: >
-      s3
-      -filer=seaweed-filer:8888
-      -ip.bind=0.0.0.0
-      -port=8333
-      -config=/run/secrets/seaweed_s3_json
+      -master.volumeSizeLimitMB=${SEAWEED_VOLUME_SIZE_LIMIT_MB:-5000}
+      -volume.max=${SEAWEED_VOLUME_MAX:-0}
+      -volume.minFreeSpace=${SEAWEED_VOLUME_MIN_FREE_SPACE_GB:-5}
+      -volume.preStopSeconds=1
+      -filer
+      -s3
+      -s3.port=8333
+      -s3.port.iceberg=0
+      -s3.config=/run/secrets/seaweed_s3_json
     logging: *logging
     secrets:
       - seaweed_s3_json
+    volumes:
+      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/seaweedfs:/data
     networks:
       - rawbbit
     deploy:
@@ -280,7 +224,7 @@ services:
     command:
       - |
         until echo "s3.bucket.create -name $${S3_BUCKET}" |
-            weed shell -master=seaweed-master:9333 -filer=seaweed-filer:8888 2>&1 |
+            weed shell -master=seaweedfs:9333 -filer=seaweedfs:8888 2>&1 |
             grep -q "created bucket"; do
           echo "waiting for SeaweedFS to create bucket $${S3_BUCKET}"
           sleep 5
@@ -315,7 +259,7 @@ services:
       CLICKHOUSE_DBT_USER: ${CLICKHOUSE_DBT_USER:?CLICKHOUSE_DBT_USER is required}
       CLICKHOUSE_DBT_PASSWORD: ${CLICKHOUSE_DBT_PASSWORD:?CLICKHOUSE_DBT_PASSWORD is required}
       # ClickHouse reads raw Parquet from SeaweedFS over the overlay network.
-      CLICKHOUSE_RAW_S3_URL: http://seaweed-s3:8333/${S3_BUCKET:-rawbbit-raw}/${S3_PREFIX:-raw}/
+      CLICKHOUSE_RAW_S3_URL: http://seaweedfs:8333/${S3_BUCKET:-rawbbit-raw}/${S3_PREFIX:-raw}/
       CLICKHOUSE_RAW_S3_ACCESS_KEY: ${S3_READER_ACCESS_KEY:?S3_READER_ACCESS_KEY is required}
       CLICKHOUSE_RAW_S3_SECRET_KEY: ${S3_READER_SECRET_KEY:?S3_READER_SECRET_KEY is required}
     ulimits:
@@ -496,9 +440,6 @@ configs:
   nats_conf:
     name: ${CFG_NATS_CONF:?run ./deploy.sh}
     file: ../vm_rawbbit_one/nats-server.conf
-  seaweed_filer:
-    name: ${CFG_SEAWEED_FILER:?run ./deploy.sh}
-    file: ../vm_rawbbit_one/seaweedfs/filer.toml
   clickhouse_resource_profile:
     name: ${CFG_CLICKHOUSE_RESOURCE_PROFILE:?run ./deploy.sh}
     file: ../vm_rawbbit_two/clickhouse/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}
