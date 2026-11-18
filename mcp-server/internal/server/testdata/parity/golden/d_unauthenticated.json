@@ -1,0 +1,540 @@
+[
+ {
+  "initialize": {
+   "capabilities": {
+    "extensions": {
+     "io.modelcontextprotocol/ui": {}
+    },
+    "logging": {},
+    "prompts": {
+     "listChanged": true
+    },
+    "resources": {
+     "listChanged": true
+    },
+    "tools": {
+     "listChanged": true
+    }
+   },
+   "protocolVersion": "2025-06-18",
+   "serverInfo": {
+    "name": "Rawbbit MCP server",
+    "version": "3.4.11"
+   }
+  },
+  "tools": {
+   "tools": [
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Check that this endpoint can reach its configured ClickHouse table.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {},
+      "type": "object"
+     },
+     "name": "healthcheck",
+     "outputSchema": {
+      "additionalProperties": true,
+      "type": "object"
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Summarize the configured Rawbbit ClickHouse events table.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       }
+      },
+      "type": "object"
+     },
+     "name": "table_overview",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "List event names with counts and observed time ranges.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "app_id": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "environment": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": "prod"
+       },
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       },
+       "limit": {
+        "default": 100,
+        "type": "integer"
+       }
+      },
+      "type": "object"
+     },
+     "name": "list_event_names",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Discover top-level JSON keys in one of the Rawbbit JSON string columns.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "app_id": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "environment": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": "prod"
+       },
+       "event_name": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       },
+       "json_column": {
+        "default": "event_params_json",
+        "type": "string"
+       },
+       "limit": {
+        "default": 100,
+        "type": "integer"
+       }
+      },
+      "type": "object"
+     },
+     "name": "discover_json_keys",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Return recent raw event rows from the configured ClickHouse table.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "app_id": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "environment": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": "prod"
+       },
+       "event_name": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       },
+       "limit": {
+        "default": 20,
+        "type": "integer"
+       }
+      },
+      "type": "object"
+     },
+     "name": "sample_events",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Run a guarded read-only ClickHouse query against Rawbbit analytics data.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "limit": {
+        "default": 100,
+        "type": "integer"
+       },
+       "sql": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "sql"
+      ],
+      "type": "object"
+     },
+     "name": "run_readonly_sql",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Calculate daily active users by actor_id for the configured events table.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "active_event_name": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "app_id": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "end_date": {
+        "type": "string"
+       },
+       "environment": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": "prod"
+       },
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       },
+       "start_date": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "start_date",
+       "end_date"
+      ],
+      "type": "object"
+     },
+     "name": "calculate_dau",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    },
+    {
+     "_meta": {
+      "fastmcp": {
+       "tags": []
+      }
+     },
+     "description": "Calculate ordered user counts for an event-name funnel.",
+     "inputSchema": {
+      "additionalProperties": false,
+      "properties": {
+       "app_id": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": null
+       },
+       "end_date": {
+        "type": "string"
+       },
+       "environment": {
+        "anyOf": [
+         {
+          "type": "string"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "default": "prod"
+       },
+       "exclude_bots": {
+        "default": true,
+        "type": "boolean"
+       },
+       "start_date": {
+        "type": "string"
+       },
+       "steps": {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       "window_hours": {
+        "default": 24,
+        "type": "integer"
+       }
+      },
+      "required": [
+       "steps",
+       "start_date",
+       "end_date"
+      ],
+      "type": "object"
+     },
+     "name": "calculate_funnel",
+     "outputSchema": {
+      "properties": {
+       "result": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "result"
+      ],
+      "type": "object",
+      "x-fastmcp-wrap-result": true
+     }
+    }
+   ]
+  }
+ },
+ {
+  "content": [
+   {
+    "text": "{\"status\":\"ok\",\"clickhouse_table\":\"analytics.events\"}",
+    "type": "text"
+   }
+  ],
+  "structuredContent": {
+   "clickhouse_table": "analytics.events",
+   "status": "ok"
+  }
+ },
+ {
+  "_meta": {
+   "fastmcp": {
+    "wrap_result": true
+   }
+  },
+  "content": [
+   {
+    "text": "[{\"event_name\":\"session_start\",\"events\":15,\"actors\":13,\"first_event_time\":\"2026-06-01T21:00:02.583000\",\"last_event_time\":\"2026-06-10T15:00:28.413000\"},{\"event_name\":\"level_up\",\"events\":9,\"actors\":9,\"first_event_time\":\"2026-06-01T09:00:01.107000\",\"last_event_time\":\"2026-06-09T21:00:26.199000\"}]",
+    "type": "text"
+   }
+  ],
+  "structuredContent": {
+   "result": [
+    {
+     "actors": 13,
+     "event_name": "session_start",
+     "events": 15,
+     "first_event_time": "2026-06-01T21:00:02.583000",
+     "last_event_time": "2026-06-10T15:00:28.413000"
+    },
+    {
+     "actors": 9,
+     "event_name": "level_up",
+     "events": 9,
+     "first_event_time": "2026-06-01T09:00:01.107000",
+     "last_event_time": "2026-06-09T21:00:26.199000"
+    }
+   ]
+  }
+ },
+ {
+  "status": 200
+ },
+ {
+  "body": "Not Found",
+  "content_type": "text/plain; charset=utf-8",
+  "status": 404
+ }
+]

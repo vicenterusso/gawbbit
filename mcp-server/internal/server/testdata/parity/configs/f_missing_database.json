@@ -1,0 +1,34 @@
+{
+ "env": {
+  "CLICKHOUSE_HOST": "127.0.0.1",
+  "CLICKHOUSE_PORT": "38123",
+  "CLICKHOUSE_USER": "rawbbit_mcp",
+  "CLICKHOUSE_PASSWORD": "mainpw",
+  "CLICKHOUSE_DATABASE": "missing_db",
+  "CLICKHOUSE_TABLE": "events",
+  "MCP_MAX_QUERY_ROWS": "50",
+  "LOG_LEVEL": "INFO",
+  "MCP_API_KEYS_JSON": "{\"operator\":\"main-token\",\"analyst\":\"analyst-token\"}"
+ },
+ "cases": [
+  {
+   "kind": "init",
+   "path": "/mcp",
+   "token": "main-token"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {}
+  }
+ ]
+}

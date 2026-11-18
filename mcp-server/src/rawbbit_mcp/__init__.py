@@ -1,2 +1,0 @@
-"""Rawbbit MCP server package."""
-

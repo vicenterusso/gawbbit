@@ -22,7 +22,7 @@ Producer -> Collector API -> NATS JetStream -> Raw Writer -> Parquet in object s
 
 The `mcp-server/` package provides:
 
-- a FastMCP server for querying a configured ClickHouse Rawbbit events table
+- a Go MCP server (official MCP Go SDK, streamable HTTP) for querying a configured ClickHouse Rawbbit events table
 - read-only MCP tools for event discovery, sampling, guarded SQL, DAU, and funnel checks
 - optional Metabase with PostgreSQL as its application database
 - Caddy ingress variants for MCP-only, Metabase-only, or shared MCP + Metabase HTTPS
@@ -239,7 +239,7 @@ Clients send:
 Authorization: Bearer replace-with-long-random-token
 ```
 
-FastMCP remote clients commonly connect to HTTP MCP endpoints at the full path, for example:
+Remote MCP clients commonly connect to HTTP MCP endpoints at the full path, for example:
 
 ```text
 https://mcp.example.com/mcp
@@ -458,6 +458,79 @@ Back up the Metabase PostgreSQL application database if dashboards, saved questi
 - ClickHouse and PostgreSQL ports should stay private
 - `.env` values should never be committed
 - Metabase application data should be backed up
+
+## Build, Run, and Test
+
+The server is a single static Go binary (`cmd/rawbbit-mcp-server`, Go 1.24,
+`CGO_ENABLED=0`). It reads the same environment variables as before (and an
+optional `.env` file in the working directory; real environment variables win).
+
+```bash
+cd mcp-server
+go build -o rawbbit-mcp-server ./cmd/rawbbit-mcp-server
+MCP_API_KEYS_JSON='{"local":"dev-token"}' CLICKHOUSE_HOST=127.0.0.1 ./rawbbit-mcp-server
+
+# cross-compile, for example for OCI Ampere
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build ./cmd/rawbbit-mcp-server
+```
+
+The container image is built from the multi-stage `Dockerfile`
+(`golang:1.24-bookworm` builder, `gcr.io/distroless/static-debian12` runtime)
+for `linux/amd64` and `linux/arm64`; pass `--build-arg VERSION=<tag>` to stamp
+the binary version.
+
+Tests:
+
+```bash
+go test ./...                     # unit tests, no services needed
+go vet ./...
+
+# Differential parity suite against a real ClickHouse (seeded automatically):
+MCP_PARITY_CLICKHOUSE=http://admin:password@127.0.0.1:8123 \
+  go test -tags integration ./internal/server -run TestMCPParity
+```
+
+The parity suite replays 623 recorded cases (initialize, `tools/list`,
+`tools/call` with valid, invalid and randomized arguments, every ClickHouse
+result type, scoped dataset endpoints, static-token, JWT and unauthenticated
+modes, raw HTTP error paths) and compares them with goldens recorded from the
+original Python/FastMCP 3.4.11 server in `internal/server/testdata/parity/golden`.
+
+## Go Rewrite Notes
+
+The Go server keeps the tool names, descriptions, JSON schemas, `_meta`,
+structured and text results (including pydantic float formatting, `NaN` in
+text content, Python `datetime.isoformat()`/`Z` timestamps and
+`decimal.Decimal` strings), pydantic validation messages, auth responses,
+audit log lines and the SQL sent to ClickHouse (`... FORMAT Native` over HTTP,
+the same query settings negotiation as clickhouse-connect). Deliberate or
+unavoidable differences:
+
+- **Readonly dataset users no longer fail every call.** clickhouse-connect
+  raised `Setting max_execution_time is unknown or readonly` when a scoped
+  dataset's ClickHouse profile (`readonly = 1`, created by the provisioner)
+  did not match the runtime query settings exactly, for example a dataset
+  without `max_execution_seconds`. The Go client drops such settings instead;
+  the dataset's server-side profile still enforces its limits.
+- **Interval columns** are decoded as the 8-byte integers ClickHouse sends;
+  clickhouse-connect read them as 4 bytes and misparsed the rest of the block.
+- `Variant`, `Dynamic`, `JSON` and `Object` result columns are not supported
+  (they are experimental in ClickHouse 24.8) and return an
+  `Unrecognized ClickHouse type` tool error.
+- `serverInfo.version` stays `3.4.11` (the FastMCP version the Python server
+  reported). JSON object key order and the omitted `"isError": false` differ
+  on the wire but are identical after JSON decoding.
+- HTTP transport errors (wrong `Accept`/`Content-Type`, missing or unknown
+  session, unsupported methods) return the same status codes and JSON-RPC
+  bodies; the text of `Parse error:` messages only matches Python for bodies
+  that do not start with a JSON value.
+- ClickHouse connection failures (`Error ... executing HTTP request attempt 1
+  (http://host:port)`) embed the Go network error instead of urllib3's text.
+- Startup failures print the final Python exception line (for example
+  `RuntimeError: Invalid MCP server settings: ...`) without a traceback; exit
+  codes are unchanged (1, or 3 when the port cannot be bound).
+- Log lines keep the Python format and fields (`service=rawbbit-mcp
+  event=...`); uvicorn's banner lines are approximated.
 
 ## Related Docs
 

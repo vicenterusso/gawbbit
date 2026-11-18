@@ -1,0 +1,344 @@
+{
+ "env": {
+  "CLICKHOUSE_HOST": "127.0.0.1",
+  "CLICKHOUSE_PORT": "38123",
+  "CLICKHOUSE_USER": "rawbbit_mcp",
+  "CLICKHOUSE_PASSWORD": "mainpw",
+  "CLICKHOUSE_DATABASE": "analytics",
+  "CLICKHOUSE_TABLE": "events",
+  "MCP_MAX_QUERY_ROWS": "50",
+  "LOG_LEVEL": "INFO",
+  "MCP_API_KEYS_JSON": "{\"operator\":\"main-token\",\"analyst\":\"analyst-token\"}",
+  "MCP_PATH": "custom/path",
+  "MCP_NAME": "Parity default",
+  "MCP_BOT_USER_AGENT_REGEX": "IPHONE|Bot",
+  "MCP_MAX_SAMPLE_ROWS": "2",
+  "MCP_MAX_EXECUTION_SECONDS": "7"
+ },
+ "cases": [
+  {
+   "kind": "init",
+   "path": "/custom/path",
+   "token": "main-token"
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "list_datasets",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/custom/path",
+   "headers": {
+    "Authorization": "Bearer nope",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "call",
+   "path": "/custom/path",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT getSetting('max_execution_time') e"
+   }
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  }
+ ]
+}

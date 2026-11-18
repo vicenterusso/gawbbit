@@ -1,0 +1,225 @@
+{
+ "env": {
+  "CLICKHOUSE_HOST": "127.0.0.1",
+  "CLICKHOUSE_PORT": "38123",
+  "CLICKHOUSE_USER": "rawbbit_mcp",
+  "CLICKHOUSE_PASSWORD": "mainpw",
+  "CLICKHOUSE_DATABASE": "analytics",
+  "CLICKHOUSE_TABLE": "events",
+  "MCP_MAX_QUERY_ROWS": "50",
+  "LOG_LEVEL": "INFO",
+  "MCP_JWT_PUBLIC_KEY": "@jwt_public_key",
+  "MCP_JWT_ISSUER": "https://issuer.example",
+  "MCP_JWT_AUDIENCE": "rawbbit-mcp"
+ },
+ "cases": [
+  {
+   "kind": "init",
+   "path": "/mcp",
+   "token": "@jwt:valid"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "@jwt:valid",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "@jwt:aud_list",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:valid",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:aud_list",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:no_exp",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:expired",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:wrong_iss",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:wrong_aud",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:hs256",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:other_key",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer @jwt:not_a_token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer ",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "bearer @jwt:valid",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "BEARER  @jwt:valid",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Token @jwt:valid",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "@jwt:valid",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/nope",
+   "headers": {},
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp/",
+   "headers": {},
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  }
+ ]
+}

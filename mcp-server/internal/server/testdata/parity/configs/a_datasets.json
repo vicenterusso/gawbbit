@@ -1,0 +1,5925 @@
+{
+ "env": {
+  "CLICKHOUSE_HOST": "127.0.0.1",
+  "CLICKHOUSE_PORT": "38123",
+  "CLICKHOUSE_USER": "rawbbit_mcp",
+  "CLICKHOUSE_PASSWORD": "mainpw",
+  "CLICKHOUSE_DATABASE": "analytics",
+  "CLICKHOUSE_TABLE": "events",
+  "MCP_MAX_QUERY_ROWS": "50",
+  "LOG_LEVEL": "INFO",
+  "MCP_API_KEYS_JSON": "{\"operator\":\"main-token\",\"analyst\":\"analyst-token\"}"
+ },
+ "registry": {
+  "version": 1,
+  "datasets": [
+   {
+    "id": "team_a",
+    "endpoint_path": "/datasets/team_a/mcp",
+    "database": "team_a",
+    "table": "events",
+    "main_exposed": true,
+    "clickhouse_user": "rawbbit_mcp_team_a",
+    "clickhouse_password": "team_a-db-secret",
+    "bearer_tokens": {
+     "agent": "team-a-token",
+     "agent.two": "team-a-token-2"
+    },
+    "max_query_rows": 7,
+    "max_sample_rows": 3,
+    "max_execution_seconds": 30
+   },
+   {
+    "id": "team_b",
+    "endpoint_path": "/datasets/team_b/mcp",
+    "database": "team_b",
+    "table": "events",
+    "main_exposed": false,
+    "clickhouse_user": "rawbbit_mcp_team_b",
+    "clickhouse_password": "team_b-db-secret",
+    "bearer_tokens": {
+     "agent": "team-b-token"
+    },
+    "max_query_rows": 50,
+    "max_execution_seconds": 5
+   },
+   {
+    "id": "team_c",
+    "endpoint_path": "/datasets/team_c/mcp",
+    "database": "team_c",
+    "table": "events",
+    "main_exposed": true,
+    "clickhouse_user": "rawbbit_mcp_team_c",
+    "clickhouse_password": "team_c-db-secret",
+    "bearer_tokens": {
+     "agent": "team-c-token"
+    }
+   }
+  ]
+ },
+ "cases": [
+  {
+   "kind": "init",
+   "path": "/mcp",
+   "token": "main-token"
+  },
+  {
+   "kind": "init",
+   "path": "/mcp",
+   "token": "analyst-token"
+  },
+  {
+   "kind": "init",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token"
+  },
+  {
+   "kind": "init",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token-2"
+  },
+  {
+   "kind": "init",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token"
+  },
+  {
+   "kind": "init",
+   "path": "/datasets/team_c/mcp",
+   "token": "team-c-token"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_datasets",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": ""
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "Team-A"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": [
+     "team_a"
+    ]
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_z"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_c"
+   },
+   "divergent": "readonly_settings"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "dataset_id": "team_c"
+   },
+   "divergent": "readonly_settings"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-01-02 03:04:05','America/Sao_Paulo') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('2026-01-02 03:04:05.5',3,'America/Sao_Paulo') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('1900-01-01 00:00:00', 3, 'America/Sao_Paulo') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('2299-12-31 23:59:59.999999', 6) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('2262-04-11 23:47:16.854775807', 9) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('1969-12-31 23:59:59.5', 1, 'UTC') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-03-08 10:00:00', 'America/New_York') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('2026-01-01 00:00:00', 3, 'Asia/Kolkata') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-01-01 00:00:00', 'Etc/UTC') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-01-01 00:00:00', 'GMT') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-01-01 00:00:00', 'Europe/London') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime('2026-07-01 00:00:00', 'Europe/London') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('2026-01-01 00:00:00.000001', 6, 'Asia/Kathmandu') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT now() > toDateTime('2000-01-01') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1e15 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1e16 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 123456789012345678 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1.5e-5 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 0.00001 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 0.0001 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT -0.0 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 12345.678 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1e21 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 2.5e300 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1.7976931348623157e308 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 5e-324 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFloat32(1e30) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 100.0 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1e17 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1.25e16 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT -1.5 AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFloat32(-0.0) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT inf AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT -inf AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT nan AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFloat32(nan) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64(0,3) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal32(-1.5,2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal128(0,10) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal256('12345678901234567890.123',5) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64(100,0) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64('0.0000001', 9) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(1e10 AS Decimal(38,0)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64(-0.000001, 6) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal32(123.45, 2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64('-99999.99999', 5) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal128('0.00001', 5) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal128('0.000001', 6) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT unhex('ff') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString(unhex('c3'),1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString(unhex('ff41'),2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString(unhex('e282'),2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString(unhex('eda080'),3) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString(unhex('f09f98'),3) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toFixedString('ok', 2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT unhex('e282ac') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT ' ' AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT '<>&/' AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT '\\\\x00\\\\b\\\\f\\\\t\\\\x1f\\\\x7f' AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT unhex('eda080') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT unhex('c0af') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv6('::ffff:1.2.3.4') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv6('2001:db8::1') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv6('::') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv6('::1.2.3.4') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv4('255.255.255.255') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(1,'a',2,'b') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map('z',1,'a',2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [(1,'x')] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST((1,'a') AS Tuple(id UInt8, name String)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [[1,2],[]] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [NULL, 1] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map('k', [1.5]) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(1.5, 'f') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(true, 1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(toDate('2026-01-01'), 1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(toUUID('00000000-0000-0000-0000-000000000001'), 1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map('a',1,'a',2) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(NULL::Nullable(String), 1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT tuple() AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT (1.5, 2.5)::Point AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [(1.5, 2.5)]::Ring AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIntervalDay(3) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toBool(0) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT sumState(1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(3 AS SimpleAggregateFunction(sum, UInt64)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST('a','Enum16(\\'a\\'=-300,\\'b\\'=2)') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(NULL, 'Nullable(Enum8(\\'x\\'=1))') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toLowCardinality('lc') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(['a', NULL], 'Array(LowCardinality(Nullable(String)))') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST([], 'Array(LowCardinality(String))') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(map('a','b'), 'Map(LowCardinality(String), LowCardinality(String))') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toNullable(toLowCardinality('x')) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toInt256('-57896044618658097711785492504343953926634992332820282019728792003956564819968') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toUInt256('115792089237316195423570985008687907853269984665640564039457584007913129639935') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toInt128('-170141183460469231731687303715884105728') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toUInt128('340282366920938463463374607431768211455') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toInt8(-128) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toUInt64(18446744073709551615) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toInt64(-9223372036854775808) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDate('2149-06-06') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDate32('2299-12-31') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDate32('1900-01-01') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toUUID('61f0c404-5cb3-11e7-907b-a6006ad3dba0') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [[]] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT NULL AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(NULL AS Nullable(UInt8)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT materialize('x') AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT repeat('é', 3) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 'tab\\there' AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(1 AS Nullable(Decimal(9,2))) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT [toDecimal32(1,1)] AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toNullable(toFixedString('a',1)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST([(1, 'a')] AS Nested(x UInt8, y String)) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toTypeName(1) AS v"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number, toString(number) s FROM numbers(3) UNION ALL SELECT 10, 'x'"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 AS a, 2 AS b, 'x' AS a2"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1, 1"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(100000) LIMIT 70000",
+    "limit": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 AS x, 1.0 AS f, 0.1+0.2 AS g, toDecimal64(1.5,3) AS d, toUUID('00000000-0000-0000-0000-000000000001') AS u, [1,2] AS a, map('k',1) AS m, tuple(1,'a') AS t, NULL AS n, toDate('2026-01-02') AS dt, toDateTime64('2026-01-02 03:04:05.123456',6) AS ts, toDateTime('2026-01-02 03:04:05','America/Sao_Paulo') AS tz, 18446744073709551615 AS big, -1e300*1e300 AS inf, nan AS nn, true AS b, toInt128(5) AS i128, 1e20 AS e20, 1e-7 AS small, 'é\u0001\"' AS s, toFixedString('ab',3) AS fs, toIPv4('1.2.3.4') AS ip, CAST('a', 'Enum8(\\'a\\'=1)') AS e, toDateTime('2026-01-02 03:04:05') AS dtn, toDate32('1900-01-01') AS d32, toFloat32(0.1) AS f32"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM nope"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "DROP TABLE x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "limit": "abc"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "limit": "5"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "limit": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "bogus": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "nosuch",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "a"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": "false",
+    "limit": 2.0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": 2.5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": true
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "bad",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDecimal64(0,3) a, toDecimal32(-1.5,2) b, toDecimal128(0,10) c, toDecimal256('12345678901234567890.123',5) d, toDecimal64(100,0) e, toDecimal64('0.0000001', 9) f, CAST(1e10 AS Decimal(38,0)) g"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT unhex('ff') AS b, 'ok' AS s, toFixedString(unhex('c3'),1) fs, unhex('e282ac') euro, ' ' ls, '<>&/' html"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIPv6('::ffff:1.2.3.4') a, toIPv6('2001:db8::1') b, toIPv6('::') c"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT map(1,'a',2,'b') m, map('z',1,'a',2) m2, [(1,'x')] at, CAST((1,'a') AS Tuple(id UInt8, name String)) nt, [[1,2],[]] aa, [NULL, 1] an, map('k', [1.5]) mf, tuple() empty_t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toDateTime64('1900-01-01 00:00:00', 3, 'America/Sao_Paulo') a, toDateTime64('2299-12-31 23:59:59.999999999', 9) b, toDateTime64('1969-12-31 23:59:59.5', 1, 'UTC') c, toDateTime('2026-03-08 10:00:00', 'America/New_York') d, toDateTime64('2026-01-01 00:00:00', 3, 'Asia/Kolkata') e, toDateTime('2026-01-01 00:00:00', 'Etc/UTC') f, toDateTime('2026-01-01 00:00:00', 'GMT') g, toDateTime('2026-01-01 00:00:00', 'Europe/London') h"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1e15 a, 1e16 b, 123456789012345678 c, 1.5e-5 d, 0.00001 e, 0.0001 f, -0.0 g, 12345.678 h, 1e21 i, 2.5e300 j, 1.7976931348623157e308 k, 5e-324 l, toFloat32(1e30) m, 100.0 n, 1e17 o, 1.25e16 p"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toInt256('-57896044618658097711785492504343953926634992332820282019728792003956564819968') a, toUInt256('115792089237316195423570985008687907853269984665640564039457584007913129639935') b, toInt8(-128) c, toUInt8(255) d, toInt64(-9223372036854775808) e"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SHOW TABLES"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "DESCRIBE TABLE analytics.events"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "EXPLAIN SELECT 1"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 FORMAT JSON"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000) LIMIT 1000"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "select 1 as x where 0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT toIntervalDay(3) i, toPoint? 1"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST('a','Enum16(\\'a\\'=-300,\\'b\\'=2)') e, CAST(NULL, 'Nullable(Enum8(\\'x\\'=1))') ne, toLowCardinality('lc') lc, toNullable(5) nn, CAST(['a'], 'Array(LowCardinality(String))') alc"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT (1.5, 2.5)::Point p, toIntervalDay(3) i, toBool(0) b, sumState(1) agg"
+   },
+   "divergent": "interval_width"
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT CAST(3 AS SimpleAggregateFunction(sum, UInt64)) s, nested.a FROM (SELECT [1] AS `nested.a`)"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": " 5 "
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "1_0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "5.0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "+3"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": [
+     1
+    ]
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": {
+     "a": 1
+    }
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": 1e+100
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": 99999999999999999999999
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "99999999999999999999999"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": "yes"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": "maybe"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": 1.0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": true
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": [
+     "x"
+    ]
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "app_id": "bob's app"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": ""
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "x",
+    "limit": "a",
+    "extra": 1,
+    "dataset_id": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": "a,b",
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "a",
+     1,
+     null
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "a",
+     "b"
+    ],
+    "start_date": 1,
+    "end_date": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     " a ",
+     "",
+     "b",
+     "  "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": -5,
+    "environment": null,
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": {
+    "x": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_datasets",
+   "args": {
+    "a": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": "7",
+    "environment": "dev"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_a",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": ""
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "   "
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1;;"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1; SELECT 2"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "select 'drop' as x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "WITH 1 AS a SELECT a limit 3"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "select\nnumber from numbers(10)\nlimit\n2"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SHOW DATABASES",
+    "limit": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "desc analytics.events",
+    "limit": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "nosuch",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "healthcheck",
+   "args": null
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_datasets",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM analytics.events LIMIT 1"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT getSetting('max_result_rows') m, getSetting('max_execution_time') e, getSetting('readonly') r"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "limit": 3
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "bob's app",
+    "environment": "dev",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "user_properties_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "traffic_source_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "geo_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "consent_json",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "nope",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 100,
+    "environment": null,
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "session_start",
+    "app_id": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT count() AS c FROM events"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM numbers(1000)",
+    "limit": 1000
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id LIMIT 4"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM events ORDER BY ingest_request_id",
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT number FROM system.numbers LIMIT 0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1 LIMIT 0 -- trailing comment"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-03",
+    "end_date": "2026-06-05",
+    "environment": null,
+    "active_event_name": "level_up",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "tutorial_started",
+     "tutorial_completed",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "environment": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 200,
+    "app_id": "com.example.other",
+    "environment": "staging"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_datasets",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT * FROM analytics.events LIMIT 1"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT getSetting('max_result_rows') m, getSetting('max_execution_time') e, getSetting('readonly') r"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_c/mcp",
+   "token": "team-c-token",
+   "tool": "healthcheck",
+   "args": {},
+   "divergent": "readonly_settings"
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_c/mcp",
+   "token": "team-c-token",
+   "tool": "table_overview",
+   "args": {},
+   "divergent": "readonly_settings"
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_c/mcp",
+   "token": "team-c-token",
+   "tool": "run_readonly_sql",
+   "args": {
+    "sql": "SELECT 1"
+   },
+   "divergent": "readonly_settings"
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "bob's app",
+    "app_id": "level_up",
+    "exclude_bots": 1,
+    "limit": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-10",
+    "active_event_name": " session_start "
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "\t",
+    "steps": [
+     "session_start",
+     "tutorial_started",
+     "session_start",
+     "level_up",
+     "session_start",
+     "session_start",
+     "session_start",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": false,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "com.example.game",
+    "exclude_bots": "yes"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-02",
+    "active_event_name": "Ünïcödé"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "com.example.game",
+    "exclude_bots": "yes",
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "level_up",
+    "limit": "x",
+    "event_name": "x'; DROP TABLE y; --",
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": null,
+    "limit": 51,
+    "event_name": "bob's app"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "event_name": "level_up"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "prod",
+    "app_id": "",
+    "exclude_bots": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "a\\b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "prod",
+    "app_id": "\t",
+    "exclude_bots": "yes",
+    "steps": [
+     "tutorial_completed",
+     "level_up",
+     "level_up",
+     "tutorial_started",
+     "tutorial_completed",
+     "level_up",
+     "session_start",
+     "session_start",
+     "tutorial_completed",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 72
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "exclude_bots": 0,
+    "start_date": "2026-06-01",
+    "end_date": "2026-12-31"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "app_id": "x'; DROP TABLE y; --",
+    "exclude_bots": "maybe",
+    "limit": 51,
+    "event_name": "x'; DROP TABLE y; --",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": "off",
+    "steps": [
+     "tutorial_started",
+     "tutorial_started",
+     "purchase_completed",
+     "tutorial_completed",
+     "tutorial_completed",
+     "tutorial_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 6
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "😀",
+    "exclude_bots": "off",
+    "steps": [
+     "purchase_completed",
+     "tutorial_completed",
+     "tutorial_completed",
+     " ",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "com.example.game",
+    "limit": true,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 49,
+    "unexpected": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "1_0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "app_id": "prod",
+    "exclude_bots": "maybe",
+    "event_name": "a\\b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "level_up",
+    "app_id": "level_up",
+    "exclude_bots": null,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "bob's app",
+    "app_id": "😀",
+    "exclude_bots": "off",
+    "start_date": "2026-06-05",
+    "end_date": "2026-12-31",
+    "active_event_name": "\t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "\t",
+    "app_id": "😀",
+    "exclude_bots": false,
+    "start_date": "2026-06-05",
+    "end_date": "2026-12-31",
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": " session_start ",
+    "exclude_bots": null,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": false,
+    "steps": [
+     "level_up",
+     "session_start",
+     "level_up",
+     " ",
+     "",
+     "session_start",
+     "tutorial_started",
+     "tutorial_completed",
+     "",
+     "tutorial_started",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 6,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "dev",
+    "exclude_bots": "yes",
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-02",
+    "unexpected": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "dev",
+    "app_id": "dev",
+    "exclude_bots": "maybe"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "exclude_bots": "off",
+    "limit": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "",
+    "steps": [
+     " ",
+     "tutorial_started",
+     "level_up",
+     "purchase_completed",
+     "session_start"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "",
+    "exclude_bots": 1,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "level_up",
+    "exclude_bots": false,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02",
+    "active_event_name": "\t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "😀",
+    "app_id": "\t",
+    "exclude_bots": "maybe"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "bob's app",
+    "exclude_bots": true,
+    "limit": 2.0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": "maybe",
+    "steps": [
+     "tutorial_started",
+     "",
+     "",
+     "tutorial_started",
+     "tutorial_started",
+     ""
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 1,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "\t",
+    "exclude_bots": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": "yes",
+    "steps": [
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "Ünïcödé",
+    "app_id": "x'; DROP TABLE y; --"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "😀",
+    "exclude_bots": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "prod",
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02",
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "exclude_bots": true,
+    "limit": 2.0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "app_id": " session_start "
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": " session_start ",
+    "app_id": "level_up",
+    "exclude_bots": "off"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 2.5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": null,
+    "app_id": " session_start ",
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "dev"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "Ünïcödé",
+    "app_id": "x'; DROP TABLE y; --",
+    "exclude_bots": false
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "😀",
+    "limit": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "com.example.game",
+    "app_id": "a\\b",
+    "exclude_bots": "maybe"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "\t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": null,
+    "exclude_bots": 0,
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "app_id": ""
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "prod",
+    "exclude_bots": null,
+    "limit": 51,
+    "unexpected": 1,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "\t",
+    "exclude_bots": false,
+    "limit": "7"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": 1,
+    "limit": 1000000000000000000000000000000,
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "app_id": "bob's app",
+    "limit": "7"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "com.example.game",
+    "exclude_bots": "maybe",
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02",
+    "active_event_name": " session_start ",
+    "unexpected": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "dev",
+    "app_id": "com.example.game",
+    "exclude_bots": 0,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "app_id": "dev",
+    "limit": 1,
+    "event_name": "Ünïcödé",
+    "unexpected": "x",
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "",
+    "app_id": "Ünïcödé",
+    "steps": [
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "com.example.game",
+    "app_id": "level_up",
+    "limit": "x",
+    "event_name": "com.example.game",
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "a\\b",
+    "steps": [
+     "purchase_completed",
+     "tutorial_started",
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "Ünïcödé",
+    "exclude_bots": 1,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "com.example.game",
+    "app_id": "x'; DROP TABLE y; --",
+    "limit": 0,
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": ""
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "Ünïcödé",
+    "app_id": "😀",
+    "exclude_bots": true,
+    "steps": [
+     "",
+     "purchase_completed",
+     " ",
+     "purchase_completed",
+     "level_up",
+     " ",
+     "tutorial_completed",
+     "tutorial_completed",
+     "purchase_completed",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "bob's app",
+    "start_date": "2026-06-05",
+    "end_date": "2026-12-31",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "bob's app",
+    "app_id": "com.example.game",
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "a\\b",
+    "exclude_bots": "off",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "app_id": "prod",
+    "exclude_bots": "maybe"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "a\\b",
+    "app_id": "dev",
+    "limit": 1000000000000000000000000000000,
+    "json_column": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": null,
+    "limit": 49,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "\t",
+    "app_id": "\t",
+    "exclude_bots": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "com.example.game",
+    "limit": "7"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": "yes",
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": " session_start ",
+    "exclude_bots": true
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     " ",
+     "level_up",
+     "tutorial_started",
+     "session_start"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 72
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "bob's app",
+    "exclude_bots": null,
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "app_id": "com.example.game",
+    "start_date": "2026-06-05",
+    "end_date": "2026-06-10",
+    "active_event_name": "x'; DROP TABLE y; --"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "session_start",
+     "purchase_completed",
+     "tutorial_started",
+     "session_start",
+     "session_start",
+     "",
+     "session_start",
+     " ",
+     "tutorial_started",
+     " ",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "app_id": "level_up",
+    "event_name": "Ünïcödé",
+    "json_column": "consent_json"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "",
+    "exclude_bots": "maybe",
+    "steps": [
+     "session_start",
+     "",
+     "purchase_completed",
+     "tutorial_started",
+     "tutorial_completed",
+     "",
+     "tutorial_completed",
+     "tutorial_completed",
+     ""
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_dau",
+   "args": {
+    "exclude_bots": true,
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-02",
+    "active_event_name": "Ünïcödé"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "json_column": "event_params_json",
+    "unexpected": null,
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "\t",
+    "app_id": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "event_name": "bob's app"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "app_id": "dev",
+    "exclude_bots": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "dev",
+    "app_id": "a\\b",
+    "event_name": "Ünïcödé",
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "\t",
+    "start_date": "2026-06-01",
+    "end_date": "2026-12-31",
+    "active_event_name": "bob's app"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": 0,
+    "steps": [
+     "level_up",
+     "session_start",
+     "",
+     "level_up",
+     "tutorial_completed",
+     "",
+     "level_up",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "window_hours": 72
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "app_id": "a\\b",
+    "steps": [
+     "session_start",
+     "",
+     "level_up",
+     "tutorial_started",
+     "level_up",
+     "",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "😀",
+    "limit": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": "yes"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "app_id": "dev",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "table_overview",
+   "args": {
+    "app_id": "level_up",
+    "exclude_bots": "yes"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "event_name": "\t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "level_up",
+    "app_id": "x'; DROP TABLE y; --",
+    "exclude_bots": null,
+    "limit": 49,
+    "event_name": "a\\b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": null,
+    "exclude_bots": 0,
+    "steps": [],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "window_hours": 24,
+    "unexpected": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "prod",
+    "app_id": "level_up",
+    "exclude_bots": "off",
+    "steps": [
+     "tutorial_completed",
+     "purchase_completed",
+     "tutorial_started",
+     "level_up",
+     "tutorial_started",
+     " ",
+     "tutorial_completed",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "dev",
+    "limit": 1000000000000000000000000000000
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": null,
+    "app_id": "dev"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "\t",
+    "app_id": "bob's app",
+    "exclude_bots": 0,
+    "limit": 5
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "Ünïcödé",
+    "limit": 5,
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "exclude_bots": 0,
+    "steps": [
+     "purchase_completed",
+     "",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 6,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": " session_start ",
+    "steps": [
+     "session_start",
+     " ",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "window_hours": "12"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "list_event_names",
+   "args": {
+    "app_id": "com.example.game",
+    "exclude_bots": 0,
+    "limit": 2
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "app_id": "Ünïcödé",
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 5,
+    "event_name": "\t"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": " session_start ",
+    "exclude_bots": "off",
+    "limit": 5,
+    "unexpected": "x",
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": 1,
+    "limit": -3,
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "exclude_bots": "off",
+    "dataset_id": "team_b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "",
+    "app_id": "bob's app",
+    "exclude_bots": "yes"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "limit": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "",
+    "app_id": " session_start ",
+    "exclude_bots": 1,
+    "limit": 2.5,
+    "event_name": "dev",
+    "json_column": "event_params_json"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "app_id": "a\\b",
+    "exclude_bots": null,
+    "limit": 2.0,
+    "unexpected": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "x'; DROP TABLE y; --"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "limit": 1,
+    "json_column": "geo_json"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": null,
+    "limit": null,
+    "event_name": "a\\b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "dev",
+    "exclude_bots": true,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "level_up",
+    "exclude_bots": null,
+    "steps": [
+     "session_start",
+     " ",
+     "level_up",
+     "tutorial_started",
+     "session_start"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": true,
+    "limit": 1000000000000000000000000000000,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "limit": 49
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "prod",
+    "app_id": "bob's app",
+    "steps": [
+     "tutorial_started",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 6
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": " session_start ",
+    "app_id": "x'; DROP TABLE y; --",
+    "steps": [
+     " ",
+     " ",
+     "session_start",
+     " ",
+     "purchase_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "com.example.game",
+    "limit": 2,
+    "event_name": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "limit": 2.0
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "app_id": " session_start ",
+    "steps": [
+     "tutorial_completed",
+     "",
+     "level_up",
+     "session_start",
+     "",
+     "tutorial_completed",
+     "purchase_completed",
+     "tutorial_completed",
+     "tutorial_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "a\\b",
+    "exclude_bots": true,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "Ünïcödé",
+    "exclude_bots": false,
+    "limit": 49
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "environment": "a\\b",
+    "app_id": "",
+    "json_column": "consent_json"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "bob's app",
+    "unexpected": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "table_overview",
+   "args": {
+    "exclude_bots": 1,
+    "unexpected": 1,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "environment": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "a\\b",
+    "steps": [
+     "purchase_completed",
+     "tutorial_started",
+     "",
+     "purchase_completed",
+     "",
+     " ",
+     "purchase_completed",
+     "purchase_completed",
+     "",
+     "tutorial_started"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "😀",
+    "app_id": "a\\b",
+    "steps": [
+     "purchase_completed",
+     "",
+     " ",
+     "",
+     "session_start",
+     "tutorial_started",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30",
+    "window_hours": 1,
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "a\\b",
+    "app_id": "x'; DROP TABLE y; --",
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "dataset_id": "default"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": null,
+    "dataset_id": "team_a"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "table_overview",
+   "args": {
+    "environment": "😀",
+    "exclude_bots": 1,
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "app_id": "prod",
+    "limit": -3,
+    "event_name": "com.example.game",
+    "unexpected": "x"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "prod",
+    "app_id": "\t",
+    "steps": [
+     " ",
+     "purchase_completed",
+     "tutorial_started",
+     "session_start",
+     "",
+     "tutorial_started",
+     "",
+     "session_start",
+     "purchase_completed",
+     "tutorial_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "calculate_dau",
+   "args": {
+    "exclude_bots": 1,
+    "start_date": "2026-01-01",
+    "end_date": "2026-06-02"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "list_event_names",
+   "args": {
+    "exclude_bots": null,
+    "limit": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     "purchase_completed",
+     "session_start",
+     "level_up",
+     " ",
+     "level_up",
+     " ",
+     "session_start",
+     "level_up"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": 0,
+    "limit": true
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "limit": 50,
+    "unexpected": 1,
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "a\\b"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_dau",
+   "args": {
+    "environment": "x'; DROP TABLE y; --",
+    "app_id": "x'; DROP TABLE y; --",
+    "start_date": "2026-01-01",
+    "end_date": "2026-12-31",
+    "active_event_name": "prod",
+    "dataset_id": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": true,
+    "limit": 2.5,
+    "event_name": "com.example.game"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_b/mcp",
+   "token": "team-b-token",
+   "tool": "discover_json_keys",
+   "args": {
+    "limit": 50
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "com.example.game",
+    "unexpected": null
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "environment": "level_up",
+    "app_id": "Ünïcödé",
+    "exclude_bots": 0,
+    "steps": [
+     "tutorial_completed",
+     "session_start",
+     "session_start",
+     " "
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-30"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/datasets/team_a/mcp",
+   "token": "team-a-token",
+   "tool": "sample_events",
+   "args": {
+    "exclude_bots": 2,
+    "limit": null,
+    "event_name": "com.example.game",
+    "unexpected": 1
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": null,
+    "limit": "1_0"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "sample_events",
+   "args": {
+    "environment": "😀"
+   }
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "main-token",
+   "tool": "calculate_funnel",
+   "args": {
+    "steps": [
+     " ",
+     "session_start",
+     "tutorial_completed"
+    ],
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-10",
+    "window_hours": "12"
+   }
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/mcp",
+   "headers": {
+    "Authorization": "Bearer team-b-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_b/mcp",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer ",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/mcp",
+   "headers": {
+    "Authorization": "Bearer ",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer   main-token  ",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Basic main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "BEARER main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp/",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/mcp/",
+   "headers": {
+    "Authorization": "Bearer main-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/mcp/",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/datasets/team_a/mcp/",
+   "headers": {
+    "Authorization": "Bearer team-a-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/nope",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/nope",
+   "headers": {
+    "Authorization": "Bearer main-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/datasets/team_a",
+   "headers": {
+    "Authorization": "Bearer team-a-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_a/",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/datasets/team_a/",
+   "headers": {
+    "Authorization": "Bearer team-a-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_ab/mcp",
+   "headers": {
+    "Authorization": "Bearer team-a-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/datasets/team_ab/mcp",
+   "headers": {
+    "Authorization": "Bearer team-a-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/datasets/team_c/other",
+   "headers": {
+    "Authorization": "Bearer team-c-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/datasets/team_c/other",
+   "headers": {
+    "Authorization": "Bearer team-c-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp?x=1",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/mcp?x=1",
+   "headers": {
+    "Authorization": "Bearer main-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "OPTIONS",
+   "path": "/mcp",
+   "headers": {},
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "OPTIONS",
+   "path": "/datasets/team_a/mcp",
+   "headers": {},
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json",
+    "Host": "evil.example"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Content-Type": "text/plain",
+    "Accept": "application/json, text/event-stream"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "not json"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 2, \"method\": \"tools/list\"}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json",
+    "Mcp-Session-Id": "00000000000000000000000000000000"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 2, \"method\": \"tools/list\"}"
+  },
+  {
+   "kind": "http",
+   "method": "GET",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token",
+    "Accept": "text/event-stream"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "DELETE",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token"
+   },
+   "body": ""
+  },
+  {
+   "kind": "http",
+   "method": "PUT",
+   "path": "/mcp",
+   "headers": {
+    "Authorization": "Bearer main-token"
+   },
+   "body": ""
+  }
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "env": {
+  "CLICKHOUSE_HOST": "127.0.0.1",
+  "CLICKHOUSE_PORT": "38123",
+  "CLICKHOUSE_USER": "rawbbit_mcp",
+  "CLICKHOUSE_PASSWORD": "mainpw",
+  "CLICKHOUSE_DATABASE": "analytics",
+  "CLICKHOUSE_TABLE": "events",
+  "MCP_MAX_QUERY_ROWS": "50",
+  "LOG_LEVEL": "INFO",
+  "MCP_ALLOW_UNAUTHENTICATED": "1"
+ },
+ "cases": [
+  {
+   "kind": "init",
+   "path": "/mcp",
+   "token": ""
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "",
+   "tool": "healthcheck",
+   "args": {}
+  },
+  {
+   "kind": "call",
+   "path": "/mcp",
+   "token": "anything",
+   "tool": "list_event_names",
+   "args": {
+    "limit": 2
+   }
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/mcp",
+   "headers": {
+    "Accept": "application/json, text/event-stream",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"initialize\", \"params\": {\"protocolVersion\": \"2025-03-26\", \"capabilities\": {}, \"clientInfo\": {\"name\": \"t\", \"version\": \"1\"}}}"
+  },
+  {
+   "kind": "http",
+   "method": "POST",
+   "path": "/other",
+   "headers": {},
+   "body": ""
+  }
+ ]
+}

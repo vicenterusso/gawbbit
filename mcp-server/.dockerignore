@@ -1,12 +1,8 @@
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.venv/
-venv/
-dist/
-build/
-.git/
-*.pyc
-.env.example
-.env
+# Only go.mod, go.sum, cmd/ and internal/ are needed to build the image.
+*
+!go.mod
+!go.sum
+!cmd/
+!internal/
+**/testdata/
+**/*_test.go
