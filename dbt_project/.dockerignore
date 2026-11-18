@@ -1,8 +1,8 @@
 .git
 .gitignore
-.venv
+runtime
 logs
 target
-dbt_packages
-*.pyc
-__pycache__
+testdata
+**/*_test.go
+*.md

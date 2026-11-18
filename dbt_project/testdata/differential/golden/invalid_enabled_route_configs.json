@@ -1,0 +1,3340 @@
+[
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id1>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "mode": "0o644",
+    "raw": "{"
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id2>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": 2
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id3>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": true
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id4>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": 1.0
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id5>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id6>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": 1,
+     "x": NaN
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id7>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id8>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x",
+       "dataset_id": "a",
+       "extra": 1,
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id9>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x",
+       "dataset_id": "a",
+       "table": "events"
+      },
+      {
+       "app_id": "a",
+       "database": "y",
+       "dataset_id": "b",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id10>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x",
+       "dataset_id": "a",
+       "table": "events"
+      },
+      {
+       "app_id": "b",
+       "database": "x",
+       "dataset_id": "b",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id11>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "default_custom",
+       "dataset_id": "a",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id12>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "../a",
+       "database": "x",
+       "dataset_id": "a",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id13>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "..",
+       "database": "x",
+       "dataset_id": "a",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id14>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x.y",
+       "dataset_id": "a",
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id15>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id15>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id15>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x",
+       "dataset_id": 1,
+       "table": "events"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id15>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id15>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id16>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id16>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id16>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": [
+      {
+       "app_id": "a",
+       "database": "x",
+       "dataset_id": "a",
+       "table": "other"
+      }
+     ],
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id15>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id15>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id16>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id16>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id17>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "only events table is supported",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id17>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id17>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "json": {
+     "routes": {},
+     "version": 1
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id15>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id15>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id16>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id16>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id17>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "only events table is supported",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id17>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id18>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id18>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id18>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 3,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ],
+   "env": {
+    "RAWBBIT_DBT_ROUTING_ENABLED": "1"
+   }
+  },
+  "state": {
+   "dbt-routes.json": {
+    "mode": "0o644",
+    "raw": "\ufffd\ufffd"
+   },
+   "jobs/": "0o700",
+   "jobs/<id10>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id10>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id11>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id11>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id12>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate or conflicting route",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id12>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id13>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id13>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id14>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe app partition identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id14>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id15>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id15>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id16>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsafe database or dataset identifier",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id16>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id17>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "only events table is supported",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id17>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id18>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id18>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id19>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id19>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id3>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id3>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "duplicate JSON field",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "unsupported route snapshot",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "enabled route snapshot unreadable or malformed",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id9>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "error_class": "route must contain only resolved public fields",
+     "exit_code": 3,
+     "finished_at": "<ts>",
+     "job_id": "<id9>",
+     "outcomes": [],
+     "status": "invalid_enabled_config",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id19>\", \"status\": \"invalid_enabled_config\", \"exit_code\": 3, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "dump": {
+   "default_custom": {
+    "columns": "event_id\tNullable(String)\napp_id\tLowCardinality(String)\nenvironment\tLowCardinality(String)\nevent_name\tLowCardinality(String)\nevent_time\tDateTime64(3, \\'UTC\\')\nevent_date\tDate\nreceived_time\tNullable(DateTime64(3, \\'UTC\\'))\nuser_id\tNullable(String)\nuser_pseudo_id\tString\nsession_id\tNullable(String)\nplatform\tLowCardinality(Nullable(String))\napp_version\tNullable(String)\nos_version\tNullable(String)\ndevice_model\tNullable(String)\nlocale\tNullable(String)\ntimezone\tNullable(String)\nevent_params_json\tNullable(String)\nuser_properties_json\tNullable(String)\ntraffic_source_json\tNullable(String)\ngeo_json\tNullable(String)\nconsent_json\tNullable(String)\ningest_request_id\tNullable(String)\ningest_user_agent\tNullable(String)\ningest_ip_hash\tNullable(String)\nnats_stream\tNullable(String)\nnats_sequence\tNullable(Int64)\n",
+    "ddl": "CREATE TABLE default_custom.events\n(\n    `event_id` Nullable(String),\n    `app_id` LowCardinality(String),\n    `environment` LowCardinality(String),\n    `event_name` LowCardinality(String),\n    `event_time` DateTime64(3, 'UTC'),\n    `event_date` Date,\n    `received_time` Nullable(DateTime64(3, 'UTC')),\n    `user_id` Nullable(String),\n    `user_pseudo_id` String,\n    `session_id` Nullable(String),\n    `platform` LowCardinality(Nullable(String)),\n    `app_version` Nullable(String),\n    `os_version` Nullable(String),\n    `device_model` Nullable(String),\n    `locale` Nullable(String),\n    `timezone` Nullable(String),\n    `event_params_json` Nullable(String),\n    `user_properties_json` Nullable(String),\n    `traffic_source_json` Nullable(String),\n    `geo_json` Nullable(String),\n    `consent_json` Nullable(String),\n    `ingest_request_id` Nullable(String),\n    `ingest_user_agent` Nullable(String),\n    `ingest_ip_hash` Nullable(String),\n    `nats_stream` Nullable(String),\n    `nats_sequence` Nullable(Int64)\n)\nENGINE = MergeTree\nPARTITION BY toYYYYMM(event_date)\nORDER BY (app_id, environment, event_name, event_date, user_pseudo_id, event_time)\nSETTINGS index_granularity = 8192\n",
+    "rows": ""
+   }
+  }
+ }
+]

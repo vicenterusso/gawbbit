@@ -1,0 +1,1246 @@
+[
+ {
+  "exit": 4,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "deploy.gate": {
+    "mode": "0o644",
+    "raw": ""
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id1>\", \"status\": \"gated\", \"exit_code\": 4, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 0,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": []
+  },
+  "stderr": [
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] START attempt",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] START model rawbbit_events_load",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] OK model rawbbit_events_load elapsed_seconds=<s>",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] START test not_null_app_id",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] PASS test not_null_app_id elapsed_seconds=<s>",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] START test not_null_event_id",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] PASS test not_null_event_id elapsed_seconds=<s>",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] START test not_null_event_time",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] PASS test not_null_event_time elapsed_seconds=<s>",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] VERIFY attempt phase=server_settlement",
+   "[dbt-progress job=<id2> attempt=<id3> kind=default db=default_custom] END attempt status=completed outcome=success"
+  ],
+  "stdout": [
+   "{\"job_id\": \"<id2>\", \"status\": \"completed\", \"exit_code\": 0, \"revision\": \"cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5\", \"outcomes\": [{\"attempt_id\": \"<id3>\", \"kind\": \"default\", \"app_id\": null, \"database\": \"default_custom\", \"window_start\": \"2026-07-01T00:00:00Z\", \"window_end\": \"2026-07-01T02:00:00Z\", \"status\": \"completed\"}]}"
+  ]
+ },
+ {
+  "content": {
+   "error_class": "interrupted_job_unloaded_windows_require_review",
+   "exit_code": 4,
+   "job_id": "old",
+   "status": "unknown",
+   "windows": [
+    [
+     "a",
+     "b"
+    ]
+   ]
+  },
+  "show": "jobs/old-job.json"
+ },
+ {
+  "content": {
+   "job_id": "done",
+   "status": "completed"
+  },
+  "show": "jobs/old-done.json"
+ },
+ {
+  "exit": 4,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/crashed.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "error_class": "interrupted_unknown_partial_write",
+     "status": "unknown",
+     "x": 1.5e+20
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": [],
+   "write-fence.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "job_id": "<id4>",
+     "operator_review_required": true,
+     "reason": "interrupted_intent",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id4>\", \"status\": \"fenced\", \"exit_code\": 4, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "content": {
+   "attempt_id": "crashed-attempt",
+   "error_class": "interrupted_unknown_partial_write",
+   "status": "unknown",
+   "x": 1.5e+20
+  },
+  "show": "attempts/crashed.json"
+ },
+ {
+  "content": {
+   "attempt_id": "crashed-attempt",
+   "job_id": "<id4>",
+   "operator_review_required": true,
+   "reason": "interrupted_intent",
+   "version": 1
+  },
+  "show": "write-fence.json"
+ },
+ {
+  "exit": 4,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/crashed.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "error_class": "interrupted_unknown_partial_write",
+     "status": "unknown",
+     "x": 1.5e+20
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": [],
+   "write-fence.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "job_id": "<id4>",
+     "operator_review_required": true,
+     "reason": "interrupted_intent",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id5>\", \"status\": \"fenced\", \"exit_code\": 4, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "exit": 4,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/crashed.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "error_class": "interrupted_unknown_partial_write",
+     "status": "unknown",
+     "x": 1.5e+20
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/garbage.json": {
+    "mode": "0o644",
+    "raw": "[1,2"
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": [],
+   "write-fence.json": {
+    "json": {
+     "attempt_id": null,
+     "job_id": "<id6>",
+     "operator_review_required": true,
+     "reason": "unreadable_attempt_record",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id6>\", \"status\": \"fenced\", \"exit_code\": 4, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "content": {
+   "attempt_id": null,
+   "job_id": "<id6>",
+   "operator_review_required": true,
+   "reason": "unreadable_attempt_record",
+   "version": 1
+  },
+  "show": "write-fence.json"
+ },
+ {
+  "exit": 4,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/crashed.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "error_class": "interrupted_unknown_partial_write",
+     "status": "unknown",
+     "x": 1.5e+20
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/nostatus.json": {
+    "json": {
+     "job_id": "x"
+    },
+    "mode": "0o644",
+    "newline": false
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": [],
+   "write-fence.json": {
+    "json": {
+     "attempt_id": null,
+     "job_id": "<id7>",
+     "operator_review_required": true,
+     "reason": "unreadable_job_record",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   }
+  },
+  "stderr": [],
+  "stdout": [
+   "{\"job_id\": \"<id7>\", \"status\": \"fenced\", \"exit_code\": 4, \"revision\": null, \"outcomes\": []}"
+  ]
+ },
+ {
+  "content": {
+   "attempt_id": null,
+   "job_id": "<id7>",
+   "operator_review_required": true,
+   "reason": "unreadable_job_record",
+   "version": 1
+  },
+  "show": "write-fence.json"
+ },
+ {
+  "exit": 0,
+  "run": {
+   "args": [
+    "backfill",
+    "2026-07-01T00:00:00Z",
+    "2026-07-01T02:00:00Z"
+   ]
+  },
+  "state": {
+   "attempts/": "0o700",
+   "attempts/<id3>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id3>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id2>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id3>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/<id9>.json": {
+    "json": {
+     "actual_database": "default_custom",
+     "app_id": null,
+     "attempt_id": "<id9>",
+     "error_class": null,
+     "finished_at": "<ts>",
+     "intended_database": "default_custom",
+     "job_id": "<id8>",
+     "kind": "default",
+     "partial_write_possible": true,
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "status": "completed",
+     "table": "events",
+     "tag": "rawbbit-dbt:<id9>",
+     "version": 1,
+     "window_end": "2026-07-01T02:00:00Z",
+     "window_start": "2026-07-01T00:00:00Z"
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "attempts/crashed.json": {
+    "json": {
+     "attempt_id": "crashed-attempt",
+     "error_class": "interrupted_unknown_partial_write",
+     "status": "unknown",
+     "x": 1.5e+20
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/": "0o700",
+   "jobs/<id1>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id1>",
+     "outcomes": [],
+     "status": "gated",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id2>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id2>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id3>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id4>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id4>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id5>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id5>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id6>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id6>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id7>.json": {
+    "json": {
+     "created_at": "<ts>",
+     "exit_code": 4,
+     "finished_at": "<ts>",
+     "job_id": "<id7>",
+     "outcomes": [],
+     "status": "fenced",
+     "version": 1
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/<id8>.json": {
+    "json": {
+     "command": "backfill",
+     "created_at": "<ts>",
+     "exit_code": 0,
+     "finished_at": "<ts>",
+     "job_id": "<id8>",
+     "outcomes": [
+      {
+       "app_id": null,
+       "attempt_id": "<id9>",
+       "database": "default_custom",
+       "kind": "default",
+       "status": "completed",
+       "window_end": "2026-07-01T02:00:00Z",
+       "window_start": "2026-07-01T00:00:00Z"
+      }
+     ],
+     "revision": "cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5",
+     "snapshot": {
+      "default_database": "default_custom",
+      "default_table": "events",
+      "enabled": false,
+      "routes": [],
+      "version": 1
+     },
+     "status": "completed",
+     "version": 1,
+     "windows": [
+      [
+       "2026-07-01T00:00:00Z",
+       "2026-07-01T02:00:00Z"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "jobs/old-done.json": {
+    "json": {
+     "job_id": "done",
+     "status": "completed"
+    },
+    "mode": "0o644",
+    "newline": true
+   },
+   "jobs/old-job.json": {
+    "json": {
+     "error_class": "interrupted_job_unloaded_windows_require_review",
+     "exit_code": 4,
+     "job_id": "old",
+     "status": "unknown",
+     "windows": [
+      [
+       "a",
+       "b"
+      ]
+     ]
+    },
+    "mode": "0o600",
+    "newline": true
+   },
+   "pipeline.lock": {
+    "mode": "0o600",
+    "raw": ""
+   },
+   "requests/": "0o700",
+   "requests/<id3>/": "0o700",
+   "requests/<id3>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id3>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/<id9>/": "0o700",
+   "requests/<id9>/*": [
+    "keys=query_id,status,transport_settings",
+    "{\"status\": \"confirmed\", \"transport_settings\": {\"lightweight_deletes_sync\": \"2\", \"log_comment\": \"rawbbit-dbt:<id9>\", \"mutations_sync\": \"2\"}}"
+   ],
+   "requests/preflight-<id2>/": "0o700",
+   "requests/preflight-<id2>/*": [],
+   "requests/preflight-<id8>/": "0o700",
+   "requests/preflight-<id8>/*": []
+  },
+  "stderr": [
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] START attempt",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] START model rawbbit_events_load",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] OK model rawbbit_events_load elapsed_seconds=<s>",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] START test not_null_app_id",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] PASS test not_null_app_id elapsed_seconds=<s>",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] START test not_null_event_id",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] PASS test not_null_event_id elapsed_seconds=<s>",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] START test not_null_event_time",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] PASS test not_null_event_time elapsed_seconds=<s>",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] VERIFY attempt phase=server_settlement",
+   "[dbt-progress job=<id8> attempt=<id9> kind=default db=default_custom] END attempt status=completed outcome=success"
+  ],
+  "stdout": [
+   "{\"job_id\": \"<id8>\", \"status\": \"completed\", \"exit_code\": 0, \"revision\": \"cb52947e3cd977a8451178ea5233e6fc640c2c9a6af80fb0d1a676e06bbc8eb5\", \"outcomes\": [{\"attempt_id\": \"<id9>\", \"kind\": \"default\", \"app_id\": null, \"database\": \"default_custom\", \"window_start\": \"2026-07-01T00:00:00Z\", \"window_end\": \"2026-07-01T02:00:00Z\", \"status\": \"completed\"}]}"
+  ]
+ },
+ {
+  "dump": {
+   "default_custom": {
+    "columns": "event_id\tNullable(String)\napp_id\tLowCardinality(String)\nenvironment\tLowCardinality(String)\nevent_name\tLowCardinality(String)\nevent_time\tDateTime64(3, \\'UTC\\')\nevent_date\tDate\nreceived_time\tNullable(DateTime64(3, \\'UTC\\'))\nuser_id\tNullable(String)\nuser_pseudo_id\tString\nsession_id\tNullable(String)\nplatform\tLowCardinality(Nullable(String))\napp_version\tNullable(String)\nos_version\tNullable(String)\ndevice_model\tNullable(String)\nlocale\tNullable(String)\ntimezone\tNullable(String)\nevent_params_json\tNullable(String)\nuser_properties_json\tNullable(String)\ntraffic_source_json\tNullable(String)\ngeo_json\tNullable(String)\nconsent_json\tNullable(String)\ningest_request_id\tNullable(String)\ningest_user_agent\tNullable(String)\ningest_ip_hash\tNullable(String)\nnats_stream\tNullable(String)\nnats_sequence\tNullable(Int64)\n",
+    "ddl": "CREATE TABLE default_custom.events\n(\n    `event_id` Nullable(String),\n    `app_id` LowCardinality(String),\n    `environment` LowCardinality(String),\n    `event_name` LowCardinality(String),\n    `event_time` DateTime64(3, 'UTC'),\n    `event_date` Date,\n    `received_time` Nullable(DateTime64(3, 'UTC')),\n    `user_id` Nullable(String),\n    `user_pseudo_id` String,\n    `session_id` Nullable(String),\n    `platform` LowCardinality(Nullable(String)),\n    `app_version` Nullable(String),\n    `os_version` Nullable(String),\n    `device_model` Nullable(String),\n    `locale` Nullable(String),\n    `timezone` Nullable(String),\n    `event_params_json` Nullable(String),\n    `user_properties_json` Nullable(String),\n    `traffic_source_json` Nullable(String),\n    `geo_json` Nullable(String),\n    `consent_json` Nullable(String),\n    `ingest_request_id` Nullable(String),\n    `ingest_user_agent` Nullable(String),\n    `ingest_ip_hash` Nullable(String),\n    `nats_stream` Nullable(String),\n    `nats_sequence` Nullable(Int64)\n)\nENGINE = MergeTree\nPARTITION BY toYYYYMM(event_date)\nORDER BY (app_id, environment, event_name, event_date, user_pseudo_id, event_time)\nSETTINGS index_granularity = 8192\n",
+    "rows": "[\"e1\", \"a1\", \"prod\", \"view\", \"2026-07-01 00:15:00.000\", \"2026-07-01\", \"2026-07-01 00:16:00.000\", null, \"u1\", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, \"1\"]\n"
+   }
+  }
+ }
+]

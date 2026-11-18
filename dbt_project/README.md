@@ -1,21 +1,44 @@
-# Rawbbit dbt project
+# Rawbbit ingestion runner (`dbt_project`)
 
-This dbt Core project loads bounded raw Parquet windows into the configured
+This component loads bounded raw Parquet windows into the configured
 ClickHouse `events` table in the Rawbbit two-VM deployment. The default target
 is `CLICKHOUSE_DATABASE.events` (normally `analytics.events`); optional app-ID
 routing can send selected apps to other existing `events` tables.
 
+> dbt is no longer used. The directory name `dbt_project`, the image name
+> `rawbbit-dbt-runner`, the `/app/bin/dbt-job` entrypoint, the `CLICKHOUSE_DBT_*`
+> and `RAWBBIT_DBT_*` settings, the crontab, journals, exit codes and progress
+> lines are kept for deployment compatibility. The former dbt-core 1.9.10 +
+> dbt-clickhouse 1.9.8 project (model, macros, selector, profile and data
+> tests) is reimplemented in Go and sends the same SQL statements to
+> ClickHouse; see [Go rewrite notes](#go-rewrite-notes).
+
 `RAWBBIT_RAW_LOAD_MODE` controls which implementation owns raw ingestion:
 
-- `dbt`: `rawbbit_events_load` reads bounded Parquet paths, incrementally
-  updates the configured default target, and runs ingestion data tests. With
-  routing disabled or unconfigured, this retains the current all-app behavior;
+- `dbt`: the `rawbbit_events_load` model reads bounded Parquet paths,
+  incrementally updates the configured default target, and runs its data
+  tests. With routing disabled or unconfigured, this retains the all-app
+  behavior;
 - `legacy`: the host cron shell loader owns the default events table (normally
-  `analytics.events`), while scheduled
-  dbt jobs log a skip because v1 has no downstream models.
+  `analytics.events`), while scheduled jobs log a skip.
 
 The two paths share `/srv/rawbbit-two/dbt/pipeline.lock` and must not ingest
 simultaneously.
+
+## Layout
+
+```text
+cmd/dbt-job/            entrypoint (/app/bin/dbt-job; "dbt" when invoked via that name)
+internal/runner/        windows, lock, journals, routing order, settlement, fencing
+internal/model/         rawbbit_events_load model, window/app macros, data tests
+internal/model/sql/     embedded SQL templates (former model, tests and adapter DDL/DML)
+internal/clickhouse/    HTTP client and control plane (readiness, settlement)
+internal/config/        route snapshot validation and revision
+internal/progress/      bounded stderr progress lines
+internal/dbtcompat/     `dbt build|debug|parse` compatibility CLI
+internal/pyjson/        byte-compatible JSON for journals and summaries
+testdata/               goldens recorded from the original Python + dbt runner
+```
 
 ## Model
 
@@ -23,37 +46,72 @@ simultaneously.
 rawbbit_events_load (alias events)
 ```
 
-The model uses dbt-clickhouse's `delete_insert` incremental strategy with
+The model keeps dbt-clickhouse's `delete_insert` incremental semantics with
 `(app_id, event_id)` as its stable key. It selects one winner for each key in
-the current window, deletes matching target keys, and inserts the winners.
-This makes overlapping hourly and daily windows safe to replay at the event-key
-level.
+the current window (latest `received_time`, then highest `nats_sequence`,
+latest `event_time`, highest `ingest_request_id`, nulls last), deletes
+matching target keys, and inserts the winners. This makes overlapping hourly
+and daily windows safe to replay at the event-key level.
+
+Per attempt the runner sends, in order: `EXISTS DATABASE` (and
+`CREATE DATABASE IF NOT EXISTS` when missing), a relation listing, then:
+
+- first run (no `events` table): `create table ... empty as (<model>)` with
+  `ENGINE MergeTree()`, `ORDER BY (app_id, environment, event_name,
+  event_date, user_pseudo_id, event_time)`, `PARTITION BY
+  toYYYYMM(event_date)` and `replicated_deduplication_window='0'`, followed by
+  `insert into events (...) <model>`;
+- incremental: drop/create/insert the scratch table
+  `events__dbt_new_data_<invocation>`, lightweight
+  `delete from events where (app_id, event_id) in (select ... from scratch)`,
+  `insert into events select <target columns> from scratch`, then drop the
+  scratch tables;
+- an existing `events` *view* is replaced through `events__dbt_tmp` and
+  `events__dbt_backup` renames, exactly like dbt's full-refresh path.
+
+Model statements carry `SETTINGS s3_throw_on_zero_files_match=0`, so empty
+hours are not errors. Every request carries `mutations_sync=2`,
+`lightweight_deletes_sync=2`, `max_execution_time=600`,
+`max_threads=DBT_CLICKHOUSE_MAX_THREADS` (default `2`) and the attempt tag as
+`log_comment`. Raw files are read through the `rawbbit_raw_s3` named
+collection from `app_id=<app|*>/event_date=YYYY-MM-DD/hour=HH/*.parquet`, one
+path per hour of the window.
 
 The model rejects empty event IDs and rows whose event timestamp cannot be
-parsed. It preserves the configured default table's physical schema and has
-`full_refresh: false`; do not remove that protection because the table is also
-the legacy loader target and an operational boundary. Optional routing reuses
+parsed. It preserves the configured default table's physical schema and never
+full-refreshes a table; do not change that because the table is also the
+legacy loader target and an operational boundary. Optional routing reuses
 this one model and adds no per-dataset model or cron.
 
-The current project contains only this ingestion model. Staging, intermediate,
-and mart models can be added when their grains, consumers, and refresh
-requirements are defined.
+### Model variables
+
+The former dbt vars keep their names, defaults and compile-error messages.
+The runner always passes an explicit window; the `dbt` compatibility CLI
+accepts them through `--vars` (YAML or JSON):
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `rawbbit_window_start` / `rawbbit_window_end` | last `rawbbit_default_lookback_hours` whole hours | Hour-aligned UTC `YYYY-MM-DDTHH:00:00Z`, end after start. |
+| `rawbbit_default_lookback_hours` | `3` | Default window length. |
+| `rawbbit_max_model_window_hours` | `168` | Larger windows fail: use the chunked backfill. |
+| `rawbbit_app_id` | none | Exact include: one raw partition plus `app_id = ...`. |
+| `rawbbit_excluded_app_ids` | `[]` | Default complement: `app_id not in (...)`; exclusive with include. |
 
 ## Tests
 
-The ingestion selector runs the model and its data tests through `dbt build`.
-The tests require non-null `event_id`, `app_id`, and `event_time`, plus global
-uniqueness of `(app_id, event_id)` in the configured default events table.
+The build runs the model and then its data tests with fail-fast semantics:
+non-null `app_id`, `event_id` and `event_time`, plus global uniqueness of
+`(app_id, event_id)` in the configured default events table. A failing test
+fails the attempt (`dbt_failed`).
 
 The tests inspect the complete target table, not only the current input window.
 Audit data written by the legacy loader before switching ingestion ownership to
-dbt.
+dbt mode.
 
 ## Progress and diagnostics
 
-When an attempt launches dbt, callbacks emit bounded, best-effort progress
-lines on stderr for observed starts and finishes of the approved ingestion
-model and its selected non-null tests:
+Each attempt emits bounded, best-effort progress lines on stderr for starts
+and finishes of the ingestion model and its non-null tests:
 
 - model `rawbbit_events_load`
 - tests `not_null_event_id`, `not_null_app_id`, and `not_null_event_time`
@@ -67,50 +125,25 @@ For example:
 
 The runner supplies the job, attempt, attempt kind (`default`, `primary`, or
 `fallback`), and destination database. Progress statuses and labels are fixed
-and allowlisted; they do not include dbt messages or arbitrary event metadata.
-Observed model finishes map to `OK`, `ERROR`, `SKIP`, or `PARTIAL`; test
-finishes map to `PASS`, `FAIL`, `WARN`, `ERROR`, or `SKIP`. Unknown events,
-labels, and status values are omitted rather than forwarded.
-Attempt-level lines also mark `START attempt`, the `VERIFY attempt
-phase=server_settlement` check, and the terminal `END attempt` outcome.
-An attempt that fails destination-readiness checks can therefore have attempt
-lines without any model/test lifecycle lines.
-The stderr stream is informational, not a job-failure signal. The existing
-final JSON summary remains on stdout, and the job/attempt/request ledgers,
-exit codes, routing, and server-settlement checks are unchanged. Relative order
-between stdout and stderr is not guaranteed; use the final summary, exit code,
-and persistent records for the authoritative outcome.
+and allowlisted; model finishes map to `OK` or `ERROR`, test finishes to
+`PASS`, `FAIL` or `ERROR`. Attempt-level lines also mark `START attempt`, the
+`VERIFY attempt phase=server_settlement` check, and the terminal `END attempt`
+outcome. An attempt that fails destination-readiness checks has attempt lines
+without model/test lines. The stderr stream is informational, not a
+job-failure signal. The final JSON summary is on stdout; relative order
+between stdout and stderr is not guaranteed, so use the final summary, exit
+code, and persistent records for the authoritative outcome.
 
-Progress is not a raw dbt debug or error log. Child stdout/stderr remain
-suppressed, dbt file logging remains disabled, and JSON artifacts remain
-disabled. Raw exceptions, SQL, credentials, paths, vars, backend responses, and
-event/user data are not forwarded. A failed dbt child always gets the fixed
-terminal category `execution_failed`, with the last observed phase and, when
-available, last observed node (or `before_first_node`/`unknown`). This remains
-generic regardless of where dbt stopped; phase and node identify observed
-activity, not the cause. A pre-node failure does not establish a parse, startup,
-authentication, grants, network, or server problem.
-
-Node-level `FAIL test ...` lines add `category=test_failed`; model or test
-`ERROR` lines add `category=node_error`. These describe the observed dbt node
-status, not a database diagnosis; the runner does not emit `database_error`.
-Exception-specific compilation, startup, and connection categories are
-disabled because a safe end-to-end mapping has not been verified. Test failure
-counts, backend codes, and request-level correlation are also disabled. Do not
-expect complete raw dbt error detail.
-
-Only observed node events are reported. With `--fail-fast`, selected tests may
-never start, and interrupted nodes may not finish; the runner does not invent
-skipped or terminal events. Logging is bounded and best-effort, so progress can
-be dropped under pipe or sink failure, contention, or resource pressure. A
-model/test success line is not proof that ClickHouse completed the write: the
-runner still performs its existing server-settlement verification before
-confirming an attempt.
-
-No operator setting, dependency, schema, grant, or Compose change is required.
-Production activation requires a runner image containing the change, separate
-authorization, and the existing [VM-two safe drain/gate procedure](../quickstart/vm_rawbbit_two/README.md#safe-first-upgrade-and-route-changes);
-do not recreate a live production runner outside that procedure.
+Raw exceptions, SQL, credentials, paths, vars, server responses, and event or
+user data are never forwarded. A failed build always gets the fixed terminal
+line `FAIL dbt category=execution_failed last_phase=<phase>` with the last
+observed node when available (`before_first_node` covers database setup and
+connection failures). `FAIL test ...` lines add `category=test_failed`;
+`ERROR` lines add `category=node_error`. The uniqueness test has no progress
+label. Progress is bounded (64 queued lines) and can be dropped under sink
+failure; a success line is not proof that ClickHouse completed the write: the
+runner still performs its server-settlement verification before confirming an
+attempt.
 
 ## Scheduling and recovery
 
@@ -146,7 +179,7 @@ docker compose exec -T \
 `RAWBBIT_DBT_MIRROR_PID1=1` mirrors the manual job output into the persistent
 container's Docker log stream so it remains visible through Dozzle.
 Manual backfill requires `RAWBBIT_RAW_LOAD_MODE=dbt`; in `legacy` mode,
-scheduled jobs skip and manual dbt backfill is rejected.
+scheduled jobs skip and manual backfill is rejected.
 
 ## Optional app-ID routing
 
@@ -276,7 +309,7 @@ follows:
 
 | Variable | Default | Maximum | Applies to |
 | --- | ---: | ---: | --- |
-| `RAWBBIT_DBT_ATTEMPT_TIMEOUT_SECONDS` | `900` | `7200` | One dbt child attempt. |
+| `RAWBBIT_DBT_ATTEMPT_TIMEOUT_SECONDS` | `900` | `7200` | One model build attempt. |
 | `RAWBBIT_DBT_JOB_TIMEOUT_SECONDS` | `21600` | `172800` | Total invocation budget. |
 | `RAWBBIT_DBT_CONTROL_TIMEOUT_SECONDS` | `10` | `60` | One ClickHouse control HTTP request. |
 | `RAWBBIT_DBT_SETTLE_TIMEOUT_SECONDS` | `30` | `300` | Proving tagged requests, loader queries, and mutations are terminal. |
@@ -297,10 +330,10 @@ route revisions long enough for investigation and that manual replay.
 
 ## Credentials
 
-The dbt container receives only ClickHouse dbt credentials. S3 credentials
+The runner container receives only ClickHouse loader (`CLICKHOUSE_DBT_*`) credentials. S3 credentials
 remain inside the ClickHouse container and are exposed to SQL through the
-`rawbbit_raw_s3` named collection. Consequently they do not appear in dbt
-compiled SQL or dbt artifacts.
+`rawbbit_raw_s3` named collection. Consequently they do not appear in the
+runner's SQL, journals or logs.
 
 The ClickHouse configuration marks every S3 named-collection value as
 non-overridable. The dbt user receives permission to use only the
@@ -309,8 +342,8 @@ secret-inspection privileges. The service-user initialization script creates a
 secret-free `users.d` overlay that enables the configured ClickHouse admin to
 delegate this privilege. Keep loader data privileges scoped to the configured
 default and explicit route `events` tables. Before enabling a route, an operator
-must verify the effective grants against the pinned dbt-clickhouse adapter's
-`delete_insert` behavior on the deployed ClickHouse version and grant only the
+must verify the effective grants against the runner's `delete_insert`
+statements (see [Model](#model)) on the deployed ClickHouse version and grant only the
 verified operations. Do not grant MCP write access or broad `*.*` data
 privileges. Routing does not create databases, tables, or grants, and the
 first-boot user script is not a migration mechanism for persistent
@@ -337,20 +370,69 @@ observation access fails closed. Separately verify permission to cancel only the
 loader's own tagged query on the deployed ClickHouse version. Do not grant
 global query cancellation to bypass a fence.
 
-## Local validation
-
-From `quickstart/vm_rawbbit_two`, with a populated private `.env`:
+## Building and testing
 
 ```bash
-docker compose build dbt-runner
-docker compose config
-docker compose run --rm --no-deps dbt-runner dbt parse \
-  --project-dir /app --profiles-dir /app
+cd dbt_project
+go test ./...                                   # offline: unit + golden tests
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build ./...
+docker compose -f ../quickstart/vm_rawbbit_two/docker-compose.yml build dbt-runner
 ```
 
-This local build and parse are development checks, not production image
-publication. The production Dockerfile build, full runner/integration checks,
-and immutable image publication are a separate release gate.
+Offline tests include statement-for-statement comparison with the SQL
+dbt-clickhouse 1.9.8 sent (`testdata/sql`), and window, route-snapshot and
+JSON goldens recorded from the original runner (`testdata/unit`).
 
-Integration builds require a running ClickHouse instance and reachable S3
-endpoint. See the quickstart README for deployment, cutover, logs, and rollback.
+Integration tests (build tag `integration`) need a disposable ClickHouse 24.8
+whose `rawbbit_raw_s3` named collection points at `<bucket URL>/raw/` and an
+anonymous S3 bucket (for example SeaweedFS). They replay
+`testdata/differential/scenarios.json` (first run, reruns, overlapping and
+late windows, dedupe ranking, parsing rules, routing and fallback, invalid
+configs, lock contention, gates, fences, test failures, randomized corpora)
+and compare tables, DDL, journals, stdout, stderr and exit codes with the
+goldens recorded from Python + dbt, then run the fault-injection cases:
+
+```bash
+RAWBBIT_DBT_IT_CLICKHOUSE=http://127.0.0.1:48123 \
+RAWBBIT_DBT_IT_S3=http://127.0.0.1:48333/raw \
+go test -tags integration ./internal/runner/
+```
+
+Never point them at production: they drop and recreate the `default_custom`,
+`team_a`, `team_b`, `fresh_db` and `missing_target` databases and empty the bucket.
+
+Inside a running runner container, `dbt debug` checks the loader connection
+and `dbt parse` validates the project; the deployment helper runs both.
+
+## Go rewrite notes
+
+- The model runs in-process instead of in a dbt child process. Timeouts and
+  signals cancel in-flight HTTP requests; the runner then still proves server
+  quiescence (owned-query KILL, `system.query_log` terminal proof, mutations)
+  before trusting the outcome, and fences when a build does not stop within
+  10 seconds. The attempt outcome `signal_exit` (child killed by a signal)
+  therefore no longer occurs; a crash of the runner itself is recovered as an
+  interrupted intent by the next job, as before.
+- Statement texts for writes and data tests equal dbt-clickhouse 1.9.8's
+  (modulo whitespace and comments). Metadata reads differ: one
+  `system.tables` listing replaces dbt's database/relation queries, and
+  `allow_nondeterministic_mutations=1` is a request setting instead of a
+  `SET` statement, so a request journal holds fewer entries per attempt with
+  unchanged record fields. Requests use `wait_end_of_query=1` instead of HTTP
+  progress headers.
+- Fail-fast stops at the first failing test. dbt (one thread) could still run
+  the next already-queued test, so its progress could show one more test and
+  a later `last_node`; outcomes, exit codes and data are unchanged.
+- Data tests run sequentially; `DBT_THREADS`, `DBT_PROFILES_DIR`,
+  `DBT_PROJECT_DIR`, `DBT_LOG_PATH` and `DBT_TARGET_PATH` are ignored, and no
+  `logs/<attempt>` or `target/<attempt>` directories are created.
+- `dbt` in the image is a small compatibility CLI (`build`, `debug`, `parse`,
+  `--version`), not dbt-core. It never prints server error bodies.
+- A lone UTF-16 surrogate escape in a journal record is rewritten as U+FFFD
+  when the record is re-saved during recovery.
+- If even the configuration-error summary cannot be persisted, the runner
+  prints its fixed "runtime unavailable" line and exits 4 (Python exited 1
+  with a traceback).
+- The image is `alpine` with Supercronic and the static binary (busybox `sh`
+  is kept because Supercronic runs crontab lines through `/bin/sh`, and the
+  deployment helper reads the mounted route snapshot with `cat`).
