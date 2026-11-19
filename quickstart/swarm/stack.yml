@@ -1,16 +1,19 @@
 # Rawbbit on Docker Swarm.
 #
-# Stateful services (NATS JetStream, SeaweedFS, ClickHouse, Postgres) and the
-# services that own host state (Caddy certificates, the ingestion runner's lock
-# and state files) run as one replica pinned to the data node: a manager with
-# the node label `rawbbit.data=true`. Their data lives in bind mounts under
+#   game SDK -> Caddy -> Vector -> ClickHouse (analytics.events) -> MCP / Metabase
+#
+# ClickHouse is the source of truth. Stateful services (ClickHouse, Postgres)
+# and the services that own host state (Caddy certificates, the backup
+# service) run as one replica pinned to the data node: a manager with the node
+# label `rawbbit.data=true`. Their data lives in bind mounts under
 # ${RAWBBIT_DATA_ROOT}, so they must never move to another node.
 #
-# Stateless services (collector-api, raw-writer, mcp-server, metabase) can run
-# on any node and scale with the *_REPLICAS variables.
+# Stateless services (vector, mcp-server, metabase) can run on any node and
+# scale with the *_REPLICAS variables.
 #
-# Deploy with ./deploy.sh, which loads .env, names the configs and secrets by
-# content hash and runs `docker stack deploy`. See README.md.
+# Deploy with ./deploy.sh, which loads .env, renders the dataset files, names
+# the configs and secrets by content hash and runs `docker stack deploy`. See
+# README.md.
 
 x-logging: &logging
   driver: json-file
@@ -28,7 +31,12 @@ x-restart: &restart
   delay: 5s
   window: 30s
 
-x-seaweedfs-image: &seaweedfs-image ${SEAWEEDFS_IMAGE:-chrislusf/seaweedfs:4.39}
+x-clickhouse-image: &clickhouse-image ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:24.8}
+
+x-clickhouse-admin: &clickhouse-admin
+  CLICKHOUSE_HOST: clickhouse
+  CLICKHOUSE_ADMIN_USER: ${CLICKHOUSE_ADMIN_USER:?CLICKHOUSE_ADMIN_USER is required}
+  CLICKHOUSE_ADMIN_PASSWORD: ${CLICKHOUSE_ADMIN_PASSWORD:?CLICKHOUSE_ADMIN_PASSWORD is required}
 
 services:
   # ---------------------------------------------------------------- edge
@@ -39,8 +47,11 @@ services:
       COLLECTOR_PUBLIC_HOSTNAME: ${COLLECTOR_PUBLIC_HOSTNAME:?COLLECTOR_PUBLIC_HOSTNAME is required}
       MCP_PUBLIC_HOSTNAME: ${MCP_PUBLIC_HOSTNAME:?MCP_PUBLIC_HOSTNAME is required}
       METABASE_PUBLIC_HOSTNAME: ${METABASE_PUBLIC_HOSTNAME:?METABASE_PUBLIC_HOSTNAME is required}
-    # Host mode keeps the real client address. The routing mesh (ingress
-    # mode) would SNAT it, and the collector hashes the client IP.
+      MAX_REQUEST_BYTES: ${MAX_REQUEST_BYTES:-1048576}
+      CORS_ORIGIN_REGEX: ${CORS_ORIGIN_REGEX:?run ./deploy.sh}
+      CORS_MAX_AGE_SECONDS: ${CORS_MAX_AGE_SECONDS:-600}
+    # Host mode keeps the real client address (the routing mesh would SNAT
+    # it); Vector hashes it into ingest_ip_hash and looks up its country.
     ports:
       - target: 80
         published: 80
@@ -67,17 +78,32 @@ services:
         order: stop-first
 
   # ----------------------------------------------------------- ingestion
-  nats:
-    image: ${NATS_IMAGE:-nats:2.10-alpine}
-    command: ["-c", "/etc/nats/nats-server.conf", "-m", "8222"]
+  # Checks the API key, validates and normalises events and inserts them into
+  # ClickHouse in batches. A request is answered only after ClickHouse stored
+  # its events, so Vector keeps no state and replicas can run anywhere.
+  vector:
+    image: ${VECTOR_IMAGE:-timberio/vector:0.62.0-alpine}
+    command: ["--config", "/etc/vector/vector.yaml", "--config", "/etc/vector/geoip.yaml"]
     logging: *logging
+    environment:
+      COLLECTOR_API_KEYS_JSON: ${COLLECTOR_API_KEYS_JSON:?COLLECTOR_API_KEYS_JSON is required}
+      IP_HASH_SALT: ${IP_HASH_SALT:?IP_HASH_SALT is required}
+      RAWBBIT_APP_DATASETS: ${RAWBBIT_APP_DATASETS:?run ./deploy.sh}
+      VECTOR_LOG: ${VECTOR_LOG:-info}
     configs:
-      - source: nats_conf
-        target: /etc/nats/nats-server.conf
+      - source: vector_config
+        target: /etc/vector/vector.yaml
+      - source: vector_geoip
+        target: /etc/vector/geoip.yaml
+    secrets:
+      - clickhouse_vector_password
+    # With GEOIP_ENABLED=1 the database is read from the same host path on
+    # every node that runs a Vector replica (see README). Without GeoIP the
+    # directory can be empty, but it must exist.
     volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/nats/jetstream:/data/jetstream
+      - ${GEOIP_HOST_DIR:-/srv/rawbbit-geoip}:/var/lib/geoip:ro
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8222/healthz"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8686/health"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -86,51 +112,11 @@ services:
       - rawbbit
     stop_grace_period: 30s
     deploy:
-      replicas: 1
-      placement: *data-node
-      restart_policy: *restart
-      update_config:
-        order: stop-first
-
-  collector-api:
-    image: ${COLLECTOR_API_IMAGE:?COLLECTOR_API_IMAGE is required, use a multiarch Go image}
-    logging: *logging
-    environment:
-      ENV: ${RAWBBIT_ENV:-production}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      PORT: "8080"
-      NATS_URL: nats://nats:4222
-      NATS_STREAM: ${NATS_STREAM:-EVENTS}
-      NATS_SUBJECT_PREFIX: ${NATS_SUBJECT_PREFIX:-events}
-      NATS_STREAM_MAX_AGE_SECONDS: ${NATS_STREAM_MAX_AGE_SECONDS:-86400}
-      NATS_DUPLICATE_WINDOW_SECONDS: ${NATS_DUPLICATE_WINDOW_SECONDS:-600}
-      NATS_MAX_INFLIGHT_PUBLISHES: ${NATS_MAX_INFLIGHT_PUBLISHES:-512}
-      MAX_EVENTS_PER_REQUEST: ${MAX_EVENTS_PER_REQUEST:-500}
-      MAX_REQUEST_BYTES: ${MAX_REQUEST_BYTES:-1048576}
-      COLLECTOR_API_KEYS_JSON: ${COLLECTOR_API_KEYS_JSON:?COLLECTOR_API_KEYS_JSON is required}
-      IP_HASH_SALT: ${IP_HASH_SALT:?IP_HASH_SALT is required}
-      STORE_RAW_IP: ${STORE_RAW_IP:-0}
-      GEOIP_ENABLED: ${GEOIP_ENABLED:-0}
-      GEOIP_MMDB_PATH: ${GEOIP_MMDB_PATH:-/var/lib/geoip/dbip-country-lite.mmdb}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-}
-      CORS_ALLOW_METHODS: ${CORS_ALLOW_METHODS:-POST,OPTIONS}
-      CORS_ALLOW_HEADERS: ${CORS_ALLOW_HEADERS:-*}
-      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-0}
-      CORS_MAX_AGE_SECONDS: ${CORS_MAX_AGE_SECONDS:-600}
-    # The GeoIP database is read from the same host path on every node that
-    # runs a collector replica (see README). Without GeoIP the directory can
-    # be empty, but it must exist.
-    volumes:
-      - ${GEOIP_HOST_DIR:-/srv/rawbbit-geoip}:/var/lib/geoip:ro
-    networks:
-      - rawbbit
-    stop_grace_period: 30s
-    deploy:
-      replicas: ${COLLECTOR_API_REPLICAS:-2}
+      replicas: ${VECTOR_REPLICAS:-1}
       restart_policy: *restart
       placement:
         # 0 = no per-node limit (works on a single node too).
-        max_replicas_per_node: ${COLLECTOR_API_MAX_REPLICAS_PER_NODE:-0}
+        max_replicas_per_node: ${VECTOR_MAX_REPLICAS_PER_NODE:-0}
         preferences:
           - spread: node.id
       update_config:
@@ -141,127 +127,14 @@ services:
         parallelism: 1
         order: start-first
 
-  raw-writer:
-    image: ${RAW_WRITER_IMAGE:?RAW_WRITER_IMAGE is required, use a multiarch Go image}
-    logging: *logging
-    environment:
-      ENV: ${RAWBBIT_ENV:-production}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      NATS_URL: nats://nats:4222
-      NATS_STREAM: ${NATS_STREAM:-EVENTS}
-      NATS_SUBJECT_PREFIX: ${NATS_SUBJECT_PREFIX:-events}
-      NATS_CONSUMER: ${NATS_CONSUMER:-raw-writer}
-      NATS_FETCH_BATCH: ${NATS_FETCH_BATCH:-200}
-      NATS_FETCH_TIMEOUT_SECONDS: ${NATS_FETCH_TIMEOUT_SECONDS:-1}
-      NATS_ACK_WAIT_SECONDS: ${NATS_ACK_WAIT_SECONDS:-300}
-      NATS_MAX_DELIVER: ${NATS_MAX_DELIVER:-10}
-      NATS_MAX_ACK_PENDING: ${NATS_MAX_ACK_PENDING:-10000}
-      RAW_FLUSH_INTERVAL_SECONDS: ${RAW_FLUSH_INTERVAL_SECONDS:-60}
-      RAW_MAX_EVENTS_PER_FILE: ${RAW_MAX_EVENTS_PER_FILE:-10000}
-      RAW_MAX_BYTES_PER_FILE: ${RAW_MAX_BYTES_PER_FILE:-52428800}
-      RAW_MAX_BUFFERED_EVENTS: ${RAW_MAX_BUFFERED_EVENTS:-}
-      RAW_STORAGE_BACKEND: s3
-      S3_ENDPOINT_URL: http://seaweedfs:8333
-      S3_BUCKET: ${S3_BUCKET:-rawbbit-raw}
-      S3_PREFIX: ${S3_PREFIX:-raw}
-      S3_ACCESS_KEY: ${S3_WRITER_ACCESS_KEY:?S3_WRITER_ACCESS_KEY is required}
-      S3_SECRET_KEY: ${S3_WRITER_SECRET_KEY:?S3_WRITER_SECRET_KEY is required}
-      S3_REGION: us-east-1
-      S3_FORCE_PATH_STYLE: "1"
-      S3_USE_SSL: "0"
-      S3_VERIFY_SSL: "1"
-    networks:
-      - rawbbit
-    # Time to flush and ACK buffered events after SIGTERM.
-    stop_grace_period: 90s
-    deploy:
-      # Replicas share one durable pull consumer. When scaling, lower
-      # RAW_MAX_BUFFERED_EVENTS so the sum stays below NATS_MAX_ACK_PENDING.
-      replicas: ${RAW_WRITER_REPLICAS:-1}
-      restart_policy: *restart
-      update_config:
-        parallelism: 1
-        order: stop-first
-
-  # ------------------------------------------------- raw object storage
-  # One process runs the SeaweedFS master, volume server, filer and S3
-  # gateway. The image entrypoint adds -dir=/data; master metadata, volumes and
-  # the filer's leveldb2 store all live in that one directory.
-  seaweedfs:
-    image: *seaweedfs-image
-    command: >
-      server
-      -ip=seaweedfs
-      -ip.bind=0.0.0.0
-      -master.volumeSizeLimitMB=${SEAWEED_VOLUME_SIZE_LIMIT_MB:-1024}
-      -volume.max=${SEAWEED_VOLUME_MAX:-0}
-      -volume.minFreeSpace=${SEAWEED_VOLUME_MIN_FREE_SPACE_GB:-5}
-      -volume.preStopSeconds=1
-      -filer
-      -s3
-      -s3.port=8333
-      -s3.port.iceberg=0
-      -s3.config=/run/secrets/seaweed_s3_json
-    logging: *logging
-    secrets:
-      - seaweed_s3_json
-    volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/seaweedfs:/data
-    networks:
-      - rawbbit
-    deploy:
-      replicas: 1
-      placement: *data-node
-      restart_policy: *restart
-      update_config:
-        order: stop-first
-
-  # Creates the raw bucket once SeaweedFS is reachable, then exits. Creating an
-  # existing bucket is a no-op, so this runs again harmlessly on every deploy.
-  seaweed-bucket-init:
-    image: *seaweedfs-image
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        until echo "s3.bucket.create -name $${S3_BUCKET}" |
-            weed shell -master=seaweedfs:9333 -filer=seaweedfs:8888 2>&1 |
-            grep -q "created bucket"; do
-          echo "waiting for SeaweedFS to create bucket $${S3_BUCKET}"
-          sleep 5
-        done
-        echo "bucket $${S3_BUCKET} ready"
-    environment:
-      S3_BUCKET: ${S3_BUCKET:-rawbbit-raw}
-    logging: *logging
-    networks:
-      - rawbbit
-    deploy:
-      mode: replicated-job
-      placement: *data-node
-
   # ----------------------------------------------------------- analytics
   clickhouse:
-    image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:24.8}
+    image: *clickhouse-image
     logging: *logging
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_ADMIN_USER:?CLICKHOUSE_ADMIN_USER is required}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_ADMIN_PASSWORD:?CLICKHOUSE_ADMIN_PASSWORD is required}
-      CLICKHOUSE_DB: ${CLICKHOUSE_DATABASE:-analytics}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
-      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-analytics}
-      CLICKHOUSE_TABLE: ${CLICKHOUSE_TABLE:-events}
-      CLICKHOUSE_MCP_USER: ${CLICKHOUSE_MCP_USER:?CLICKHOUSE_MCP_USER is required}
-      CLICKHOUSE_MCP_PASSWORD: ${CLICKHOUSE_MCP_PASSWORD:?CLICKHOUSE_MCP_PASSWORD is required}
-      CLICKHOUSE_METABASE_USER: ${CLICKHOUSE_METABASE_USER:?CLICKHOUSE_METABASE_USER is required}
-      CLICKHOUSE_METABASE_PASSWORD: ${CLICKHOUSE_METABASE_PASSWORD:?CLICKHOUSE_METABASE_PASSWORD is required}
-      CLICKHOUSE_LOADER_USER: ${CLICKHOUSE_LOADER_USER:?CLICKHOUSE_LOADER_USER is required}
-      CLICKHOUSE_LOADER_PASSWORD: ${CLICKHOUSE_LOADER_PASSWORD:?CLICKHOUSE_LOADER_PASSWORD is required}
-      CLICKHOUSE_DBT_USER: ${CLICKHOUSE_DBT_USER:?CLICKHOUSE_DBT_USER is required}
-      CLICKHOUSE_DBT_PASSWORD: ${CLICKHOUSE_DBT_PASSWORD:?CLICKHOUSE_DBT_PASSWORD is required}
-      # ClickHouse reads raw Parquet from SeaweedFS over the overlay network.
-      CLICKHOUSE_RAW_S3_URL: http://seaweedfs:8333/${S3_BUCKET:-rawbbit-raw}/${S3_PREFIX:-raw}/
-      CLICKHOUSE_RAW_S3_ACCESS_KEY: ${S3_READER_ACCESS_KEY:?S3_READER_ACCESS_KEY is required}
-      CLICKHOUSE_RAW_S3_SECRET_KEY: ${S3_READER_SECRET_KEY:?S3_READER_SECRET_KEY is required}
     ulimits:
       nofile:
         soft: 262144
@@ -269,21 +142,14 @@ services:
     configs:
       - source: clickhouse_resource_profile
         target: /etc/clickhouse-server/config.d/resource-profile.xml
-      - source: clickhouse_named_collection
-        target: /etc/clickhouse-server/config.d/raw-s3-named-collection.xml
+      - source: clickhouse_backups
+        target: /etc/clickhouse-server/config.d/backups.xml
       - source: clickhouse_users_profile
         target: /etc/clickhouse-server/users.d/resource-profile-users.xml
-      - source: clickhouse_schema
-        target: /docker-entrypoint-initdb.d/01_schema_analytics_events.sql
-      - source: clickhouse_service_users
-        target: /docker-entrypoint-initdb.d/02_service_users.sh
-        mode: 0555
-      - source: clickhouse_dbt_observation_grants
-        target: /docker-entrypoint-initdb.d/03_dbt_observation_grants.sh
-        mode: 0555
     volumes:
       - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/data:/var/lib/clickhouse
       - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/logs:/var/log/clickhouse-server
+      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/backups:/backups
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8123/ping"]
       interval: 10s
@@ -300,38 +166,60 @@ services:
       update_config:
         order: stop-first
 
-  dbt-runner:
-    image: ${DBT_RUNNER_IMAGE:?DBT_RUNNER_IMAGE is required, use a multiarch Go image}
-    init: true
+  # Creates analytics.events, the service users and every dataset, then exits.
+  # It is idempotent; Swarm runs it again whenever one of its inputs (schema,
+  # script, passwords, datasets) changes.
+  clickhouse-setup:
+    image: *clickhouse-image
+    entrypoint: ["/bin/bash", "/etc/rawbbit/setup.sh"]
     logging: *logging
     environment:
-      CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PORT: "8123"
-      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-analytics}
-      CLICKHOUSE_DBT_USER: ${CLICKHOUSE_DBT_USER:?CLICKHOUSE_DBT_USER is required}
-      CLICKHOUSE_DBT_PASSWORD: ${CLICKHOUSE_DBT_PASSWORD:?CLICKHOUSE_DBT_PASSWORD is required}
-      CLICKHOUSE_SECURE: "0"
-      CLICKHOUSE_VERIFY: "1"
-      DBT_CLICKHOUSE_MAX_THREADS: ${DBT_CLICKHOUSE_MAX_THREADS:-2}
-      RAWBBIT_RAW_LOAD_MODE: ${RAWBBIT_RAW_LOAD_MODE:-dbt}
-      RAWBBIT_DBT_ROUTING_ENABLED: ${RAWBBIT_DBT_ROUTING_ENABLED:-0}
-      RAWBBIT_DBT_ROUTES_FILE: /app/runtime/dbt-routes.json
-      RAWBBIT_DBT_HOURLY_LOOKBACK_HOURS: ${RAWBBIT_DBT_HOURLY_LOOKBACK_HOURS:-3}
-      RAWBBIT_DBT_DAILY_LOOKBACK_DAYS: ${RAWBBIT_DBT_DAILY_LOOKBACK_DAYS:-3}
-      RAWBBIT_DBT_BACKFILL_CHUNK_HOURS: ${RAWBBIT_DBT_BACKFILL_CHUNK_HOURS:-24}
-    # Lock, attempt records and state files live here: exactly one runner.
-    volumes:
-      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/dbt:/app/runtime
+      <<: *clickhouse-admin
+      CLICKHOUSE_MCP_USER: ${CLICKHOUSE_MCP_USER:-rawbbit_mcp}
+      CLICKHOUSE_MCP_PASSWORD: ${CLICKHOUSE_MCP_PASSWORD:?CLICKHOUSE_MCP_PASSWORD is required}
+      CLICKHOUSE_METABASE_USER: ${CLICKHOUSE_METABASE_USER:-metabase_reader}
+      CLICKHOUSE_METABASE_PASSWORD: ${CLICKHOUSE_METABASE_PASSWORD:?CLICKHOUSE_METABASE_PASSWORD is required}
+    configs:
+      - source: clickhouse_setup
+        target: /etc/rawbbit/setup.sh
+      - source: clickhouse_schema
+        target: /etc/rawbbit/schema.sql
+    secrets:
+      - clickhouse_vector_password
+      - datasets_tsv
     networks:
       - rawbbit
-    stop_grace_period: 30s
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+
+  # Daily BACKUP of analytics and every dataset database (see backup.sh).
+  clickhouse-backup:
+    image: *clickhouse-image
+    entrypoint: ["/bin/bash", "/etc/rawbbit/backup.sh"]
+    logging: *logging
+    environment:
+      <<: *clickhouse-admin
+      BACKUP_AT: ${BACKUP_AT:-03:30}
+      BACKUP_KEEP_LOCAL: ${BACKUP_KEEP_LOCAL:-7}
+      BACKUP_S3_URL: ${BACKUP_S3_URL:-}
+      BACKUP_S3_ACCESS_KEY: ${BACKUP_S3_ACCESS_KEY:-}
+      BACKUP_S3_SECRET_KEY: ${BACKUP_S3_SECRET_KEY:-}
+    configs:
+      - source: clickhouse_backup
+        target: /etc/rawbbit/backup.sh
+    # The same directory ClickHouse writes to, for pruning old local copies.
+    volumes:
+      - ${RAWBBIT_DATA_ROOT:-/srv/rawbbit}/clickhouse/backups:/backups
+    networks:
+      - rawbbit
     deploy:
       replicas: 1
       placement: *data-node
       restart_policy: *restart
-      update_config:
-        # Never let two runners overlap, even briefly.
-        order: stop-first
 
   mcp-server:
     image: ${MCP_SERVER_IMAGE:?MCP_SERVER_IMAGE is required, use a multiarch Go image}
@@ -351,14 +239,19 @@ services:
       MCP_JWT_JWKS_URI: ${MCP_JWT_JWKS_URI:-}
       MCP_JWT_ISSUER: ${MCP_JWT_ISSUER:-}
       MCP_JWT_AUDIENCE: ${MCP_JWT_AUDIENCE:-}
+      MCP_DATASETS_FILE: /run/secrets/mcp_datasets_json
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: "8123"
-      CLICKHOUSE_USER: ${CLICKHOUSE_MCP_USER:?CLICKHOUSE_MCP_USER is required}
+      CLICKHOUSE_USER: ${CLICKHOUSE_MCP_USER:-rawbbit_mcp}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_MCP_PASSWORD:?CLICKHOUSE_MCP_PASSWORD is required}
-      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE:-analytics}
-      CLICKHOUSE_TABLE: ${CLICKHOUSE_TABLE:-events}
+      CLICKHOUSE_DATABASE: analytics
+      CLICKHOUSE_TABLE: events
       CLICKHOUSE_SECURE: "0"
       CLICKHOUSE_VERIFY: "1"
+    secrets:
+      # The MCP server refuses a registry readable by group or others.
+      - source: mcp_datasets_json
+        mode: 0400
     networks:
       - rawbbit
     deploy:
@@ -440,32 +333,41 @@ configs:
   caddyfile:
     name: ${CFG_CADDYFILE:?run ./deploy.sh}
     file: ./Caddyfile
-  nats_conf:
-    name: ${CFG_NATS_CONF:?run ./deploy.sh}
-    file: ../vm_rawbbit_one/nats-server.conf
+  vector_config:
+    name: ${CFG_VECTOR_CONFIG:?run ./deploy.sh}
+    file: ./vector/vector.yaml
+  vector_geoip:
+    name: ${CFG_VECTOR_GEOIP:?run ./deploy.sh}
+    file: ./vector/geoip-${GEOIP_ENABLED:-0}.yaml
   clickhouse_resource_profile:
     name: ${CFG_CLICKHOUSE_RESOURCE_PROFILE:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/clickhouse/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}
-  clickhouse_named_collection:
-    name: ${CFG_CLICKHOUSE_NAMED_COLLECTION:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/clickhouse/config.d/raw-s3-named-collection.xml
+    file: ./clickhouse/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}
+  clickhouse_backups:
+    name: ${CFG_CLICKHOUSE_BACKUPS:?run ./deploy.sh}
+    file: ./clickhouse/config.d/backups.xml
   clickhouse_users_profile:
     name: ${CFG_CLICKHOUSE_USERS_PROFILE:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/clickhouse/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}
+    file: ./clickhouse/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}
   clickhouse_schema:
     name: ${CFG_CLICKHOUSE_SCHEMA:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/clickhouse/schema_analytics_events.sql
-  clickhouse_service_users:
-    name: ${CFG_CLICKHOUSE_SERVICE_USERS:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/clickhouse/initdb.d/02_service_users.sh
-  clickhouse_dbt_observation_grants:
-    name: ${CFG_CLICKHOUSE_DBT_OBSERVATION_GRANTS:?run ./deploy.sh}
-    file: ./clickhouse/03_dbt_observation_grants.sh
+    file: ./clickhouse/schema.sql
+  clickhouse_setup:
+    name: ${CFG_CLICKHOUSE_SETUP:?run ./deploy.sh}
+    file: ./clickhouse/setup.sh
+  clickhouse_backup:
+    name: ${CFG_CLICKHOUSE_BACKUP:?run ./deploy.sh}
+    file: ./clickhouse/backup.sh
   postgres_metabase_init:
     name: ${CFG_POSTGRES_METABASE_INIT:?run ./deploy.sh}
-    file: ../vm_rawbbit_two/postgres/initdb.d/01_metabase_database.sh
+    file: ./postgres/01_metabase_database.sh
 
 secrets:
-  seaweed_s3_json:
-    name: ${SECRET_SEAWEED_S3_JSON:?run ./deploy.sh}
-    file: ./.generated/seaweedfs-s3.json
+  clickhouse_vector_password:
+    name: ${SECRET_CLICKHOUSE_VECTOR_PASSWORD:?run ./deploy.sh}
+    file: ./.generated/clickhouse_vector_password
+  datasets_tsv:
+    name: ${SECRET_DATASETS_TSV:?run ./deploy.sh}
+    file: ./.generated/datasets.tsv
+  mcp_datasets_json:
+    name: ${SECRET_MCP_DATASETS_JSON:?run ./deploy.sh}
+    file: ./.generated/mcp-datasets.json

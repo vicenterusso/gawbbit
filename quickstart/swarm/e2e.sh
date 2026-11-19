@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 # End-to-end test of the Swarm stack on a single-node swarm:
 #
-#   loadgen -> Caddy -> collector-api (2) -> NATS -> raw-writer (2) -> SeaweedFS
-#     -> ingestion runner backfill -> ClickHouse -> MCP run_readonly_sql
+#   loadgen -> Caddy -> Vector (2 replicas) -> ClickHouse -> MCP run_readonly_sql
 #
 # rawbbit-loadgen sends synthetic events (plus requests the collector must
-# reject and re-sent duplicate batches), then checks through the public MCP
-# endpoint that ClickHouse holds every accepted event exactly once.
+# reject, events it must drop and re-sent duplicate batches), then checks
+# through the public MCP endpoint that ClickHouse holds every accepted event
+# exactly once. A second run sends a dataset app and checks it through the
+# dataset's own MCP endpoint. Then CORS, backups and MCP auth are checked.
 #
 #   ./e2e.sh [--build] [--keep]
 #
-#   --build  build the four Go images locally as rawbbit-<name>:e2e first
+#   --build  build the MCP server image locally as rawbbit-mcp-server:e2e first
 #   --keep   leave the stack running afterwards (default: remove it and its data)
 #
-# Without --build, set COLLECTOR_API_IMAGE, RAW_WRITER_IMAGE, MCP_SERVER_IMAGE
-# and DBT_RUNNER_IMAGE. Every secret is random per run. The stack publishes
-# ports 80/443 on this host, so run it on a CI runner, a disposable VM or in
-# Docker-in-Docker, not next to another web server. Needs bash, docker, curl
-# and either Go or Docker to build the load generator; uses sudo when not
-# root.
+# Without --build, set MCP_SERVER_IMAGE. Every secret is random per run. The
+# stack publishes ports 80/443 on this host, so run it on a CI runner, a
+# disposable VM or in Docker-in-Docker, not next to another web server. Needs
+# bash, docker, curl and either Go or Docker to build the load generator; uses
+# sudo when not root.
 #
 # Tunables: E2E_EVENTS (3000), E2E_RATE (events/s, 500), E2E_BATCH (50),
 # E2E_DATA_ROOT (/srv/rawbbit-e2e), E2E_STACK (rawbbit-e2e),
-# E2E_VERIFY_TIMEOUT (10m), LOADGEN_BIN (prebuilt binary).
+# E2E_VERIFY_TIMEOUT (5m), LOADGEN_BIN (prebuilt binary).
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -34,7 +34,7 @@ for arg in "$@"; do
   case "$arg" in
     --build) build=1 ;;
     --keep) keep=1 ;;
-    -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
     *) echo "usage: $0 [--build] [--keep]" >&2; exit 2 ;;
   esac
 done
@@ -56,20 +56,13 @@ fi
 node=$(docker info --format '{{.Swarm.NodeID}}')
 docker node update --label-add rawbbit.data=true "$node" >/dev/null
 
-# --- images -----------------------------------------------------------------
+# --- image ------------------------------------------------------------------
 if ((build)); then
-  for pair in collector-api:backend/collector-api raw-writer:backend/raw-writer \
-              mcp-server:mcp-server dbt-runner:dbt_project; do
-    name=${pair%%:*} dir=${pair#*:}
-    log "building rawbbit-$name:e2e from $dir"
-    DOCKER_BUILDKIT=1 docker build -q -t "rawbbit-$name:e2e" "$repo/$dir" >/dev/null
-  done
-  export COLLECTOR_API_IMAGE=rawbbit-collector-api:e2e RAW_WRITER_IMAGE=rawbbit-raw-writer:e2e \
-         MCP_SERVER_IMAGE=rawbbit-mcp-server:e2e DBT_RUNNER_IMAGE=rawbbit-dbt-runner:e2e
+  log "building rawbbit-mcp-server:e2e"
+  DOCKER_BUILDKIT=1 docker build -q -t rawbbit-mcp-server:e2e "$repo/mcp-server" >/dev/null
+  export MCP_SERVER_IMAGE=rawbbit-mcp-server:e2e
 fi
-for v in COLLECTOR_API_IMAGE RAW_WRITER_IMAGE MCP_SERVER_IMAGE DBT_RUNNER_IMAGE; do
-  [[ -n "${!v:-}" ]] || die "$v is not set (or pass --build)"
-done
+[[ -n "${MCP_SERVER_IMAGE:-}" ]] || die "MCP_SERVER_IMAGE is not set (or pass --build)"
 
 # --- load generator ---------------------------------------------------------
 loadgen=${LOADGEN_BIN:-}
@@ -90,15 +83,19 @@ while IFS='=' read -r key val; do
 done < .env.example
 
 api_key=e2e$(rand) mcp_token=e2e$(rand) app_id=com.example.loadgen
+ds_key=e2e$(rand) ds_token=e2e$(rand) ds_app=com.example.loadgen.dataset ds_id=e2e
+cat > "$work/datasets.json" <<EOF
+{"datasets": [{"id": "$ds_id", "app_ids": ["$ds_app"], "main_exposed": false,
+  "clickhouse_password": "e2e$(rand)", "mcp_tokens": {"e2e": "$ds_token"}}]}
+EOF
 export RAWBBIT_ENV_FILE=.env.example RAWBBIT_STACK_NAME=$stack RAWBBIT_DATA_ROOT=$data_root \
-  GEOIP_HOST_DIR=$data_root-geoip \
+  RAWBBIT_DATASETS_FILE=$work/datasets.json GEOIP_HOST_DIR=$data_root-geoip \
   COLLECTOR_PUBLIC_HOSTNAME=http://collector.e2e.test MCP_PUBLIC_HOSTNAME=http://mcp.e2e.test \
   METABASE_PUBLIC_HOSTNAME=http://metabase.e2e.test \
-  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"$app_id\"}" MCP_API_KEYS_JSON="{\"e2e\":\"$mcp_token\"}" \
-  COLLECTOR_API_REPLICAS=2 RAW_WRITER_REPLICAS=2 RAW_MAX_BUFFERED_EVENTS=4000 \
-  MCP_SERVER_REPLICAS=1 METABASE_REPLICAS=${E2E_METABASE_REPLICAS:-0} \
-  SEAWEED_VOLUME_SIZE_LIMIT_MB=64 SEAWEED_VOLUME_MAX=30 SEAWEED_VOLUME_MIN_FREE_SPACE_GB=1 \
-  RAW_FLUSH_INTERVAL_SECONDS=10 AWS_REPLICA_ENABLED=0
+  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"$app_id\",\"$ds_key\":\"$ds_app\"}" \
+  MCP_API_KEYS_JSON="{\"e2e\":\"$mcp_token\"}" \
+  CORS_ALLOW_ORIGINS=https://game.e2e.test \
+  VECTOR_REPLICAS=2 MCP_SERVER_REPLICAS=1 METABASE_REPLICAS=${E2E_METABASE_REPLICAS:-0}
 
 dump() {
   log "--- services"
@@ -140,40 +137,61 @@ as_root env RAWBBIT_DATA_ROOT="$data_root" GEOIP_HOST_DIR="$data_root-geoip" \
 log "deploying stack $stack"
 timeout 900 ./deploy.sh
 
-# --- load and verify --------------------------------------------------------
-runner_exec="docker exec \$(docker ps -q -f name=${stack}_dbt-runner | head -1) /app/bin/dbt-job"
-# The runner fences itself (operator review) when its preflight cannot reach
-# ClickHouse, so wait until its control checks pass before the first backfill.
-log "waiting for the runner to reach ClickHouse"
-for i in $(seq 60); do
-  sh -c "$runner_exec verify-control" >/dev/null 2>&1 && break
-  ((i < 60)) || die "the runner cannot reach ClickHouse"
+log "waiting for clickhouse-setup to finish"
+for i in $(seq 120); do
+  states=$(docker service ps --format '{{.CurrentState}}' "${stack}_clickhouse-setup" 2>/dev/null || true)
+  grep -q '^Complete' <<< "$states" && break
+  ((i < 120)) || die "clickhouse-setup did not complete: $states"
   sleep 5
 done
+docker service logs --raw "${stack}_clickhouse-setup" 2>&1 | grep '^setup:' || true
 
-"$loadgen" run \
-  -collector http://127.0.0.1 -collector-host collector.e2e.test \
-  -api-key "$api_key" -app-id "$app_id" \
+collector=(-collector http://127.0.0.1 -collector-host collector.e2e.test)
+mcp=(-mcp-url http://127.0.0.1/mcp -mcp-host mcp.e2e.test)
+verify=(-verify-timeout "${E2E_VERIFY_TIMEOUT:-5m}" -verify-interval 5s)
+
+# --- main app: load, rejections, drops, duplicates ---------------------------
+"$loadgen" run "${collector[@]}" -api-key "$api_key" -app-id "$app_id" \
   -events "${E2E_EVENTS:-3000}" -rate "${E2E_RATE:-500}" -batch "${E2E_BATCH:-50}" \
-  -concurrency 8 -players 100 -duplicates 0.1 -max-events-per-request 500 \
-  -mcp-url http://127.0.0.1/mcp -mcp-host mcp.e2e.test -mcp-token "$mcp_token" \
-  -load-cmd "$runner_exec backfill \"\$LOADGEN_WINDOW_START\" \"\$LOADGEN_WINDOW_END\"" \
-  -verify-timeout "${E2E_VERIFY_TIMEOUT:-10m}" -verify-interval 20s \
-  -manifest "$work/manifest.json"
+  -concurrency 8 -players 100 -duplicates 0.1 -max-request-bytes 1048576 \
+  "${mcp[@]}" -mcp-token "$mcp_token" "${verify[@]}" -manifest "$work/main.json"
 
-# A second backfill of the same window must not duplicate rows.
-log "re-running the backfill to check idempotency"
-window=$(sed -n 's/.*"window_\(start\|end\)": "\(.*\)".*/\2/p' "$work/manifest.json" | tr '\n' ' ')
-for attempt in 1 2 3; do
-  sh -c "$runner_exec backfill $window" >/dev/null && break
-  ((attempt < 3)) || die "second backfill failed"
-  sleep 20
+# --- dataset app: its own database, read through its own MCP endpoint --------
+"$loadgen" run "${collector[@]}" -api-key "$ds_key" -app-id "$ds_app" \
+  -events 500 -rate 0 -batch 50 -concurrency 4 -duplicates 0.1 -negative=false \
+  -mcp-url "http://127.0.0.1/datasets/$ds_id/mcp" -mcp-host mcp.e2e.test -mcp-token "$ds_token" \
+  -table "dataset_$ds_id.events" "${verify[@]}" -manifest "$work/dataset.json"
+
+# The main MCP user must not read a dataset that is not main_exposed.
+if "$loadgen" verify -manifest "$work/dataset.json" "${mcp[@]}" -mcp-token "$mcp_token" \
+     -table "dataset_$ds_id.events" -verify-timeout 1s -verify-interval 1s >/dev/null 2>&1; then
+  die "the main MCP endpoint can read dataset_$ds_id"
+fi
+log "main MCP endpoint cannot read dataset_$ds_id"
+
+# --- CORS -------------------------------------------------------------------
+preflight() {
+  curl -s -o /dev/null -D - -X OPTIONS -H 'Host: collector.e2e.test' -H "Origin: $1" \
+    -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,x-api-key' \
+    http://127.0.0.1/v1/events:batch
+}
+preflight https://game.e2e.test | grep -qi '^access-control-allow-origin: https://game.e2e.test' \
+  || die "CORS preflight from an allowed origin was not allowed"
+if preflight https://other.e2e.test | grep -qi '^access-control-allow-origin'; then
+  die "CORS preflight from another origin was allowed"
+fi
+log "CORS allows https://game.e2e.test only"
+
+# --- backups ----------------------------------------------------------------
+backup_task=$(docker ps -q -f "name=${stack}_clickhouse-backup" | head -1)
+[[ -n "$backup_task" ]] || die "clickhouse-backup is not running"
+docker exec "$backup_task" /bin/bash /etc/rawbbit/backup.sh --now
+for db in analytics "dataset_$ds_id"; do
+  as_root sh -c "ls '$data_root/clickhouse/backups/$db/'*.zip" >/dev/null 2>&1 || die "no backup of $db"
 done
-"$loadgen" verify -manifest "$work/manifest.json" \
-  -mcp-url http://127.0.0.1/mcp -mcp-host mcp.e2e.test -mcp-token "$mcp_token" \
-  -verify-timeout 1m -verify-interval 10s
+log "backups of analytics and dataset_$ds_id written"
 
-# The MCP endpoint must refuse a request without a token.
+# --- MCP auth ---------------------------------------------------------------
 code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: mcp.e2e.test' -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' http://127.0.0.1/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}')

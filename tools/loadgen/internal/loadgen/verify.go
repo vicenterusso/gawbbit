@@ -31,7 +31,11 @@ type Querier interface {
 
 var safeIdent = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
 
-// VerifySQL counts rows and distinct event_ids per event_name for a run.
+// VerifySQL counts rows and distinct (app_id, event_id) pairs per event_name
+// for a run, across every app_id: an event the collector should have dropped
+// (for example one with an app_id its API key may not send) shows up as an
+// unexpected row. FINAL collapses rows ClickHouse has not merged yet, so a
+// count above the unique count means real duplicates.
 // Values are inlined (MCP's run_readonly_sql has no parameters) and must
 // match safeIdent.
 func VerifySQL(table string, m Manifest) (string, error) {
@@ -42,13 +46,12 @@ func VerifySQL(table string, m Manifest) (string, error) {
 	}
 	dateFrom := m.WindowStart.UTC().Add(-24 * time.Hour).Format("2006-01-02")
 	dateTo := m.WindowEnd.UTC().Add(24 * time.Hour).Format("2006-01-02")
-	return fmt.Sprintf(`SELECT event_name, toUInt32(count()) AS rows, toUInt32(uniqExact(event_id)) AS uniq
-FROM %s
-WHERE app_id = '%s'
-  AND event_date BETWEEN toDate('%s') AND toDate('%s')
+	return fmt.Sprintf(`SELECT event_name, toUInt32(count()) AS rows, toUInt32(uniqExact(app_id, event_id)) AS uniq
+FROM %s FINAL
+WHERE event_date BETWEEN toDate('%s') AND toDate('%s')
   AND JSONExtractString(ifNull(event_params_json, ''), '%s') = '%s'
 GROUP BY event_name
-ORDER BY event_name`, table, m.AppID, dateFrom, dateTo, RunParam, m.RunID), nil
+ORDER BY event_name`, table, dateFrom, dateTo, RunParam, m.RunID), nil
 }
 
 // ParseCounts turns query rows into per-event_name counts.

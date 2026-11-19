@@ -63,7 +63,7 @@ func TestVerifySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"FROM analytics.events", "app_id = 'com.example.game'", "toDate('2026-11-17') AND toDate('2026-11-19')", "'loadgen_run') = 'abc123'"} {
+	for _, want := range []string{"FROM analytics.events FINAL", "uniqExact(app_id, event_id)", "toDate('2026-11-17') AND toDate('2026-11-19')", "'loadgen_run') = 'abc123'"} {
 		if !strings.Contains(sql, want) {
 			t.Errorf("sql lacks %q:\n%s", want, sql)
 		}
@@ -101,15 +101,17 @@ func TestParseCountsAndDiff(t *testing.T) {
 	}
 }
 
-// fakeCollector mimics the collector's auth, validation and NATS
-// deduplication by event_id.
+// fakeCollector mimics Caddy + Vector: 401 for a missing or unknown API key,
+// 413 above maxBytes, 400 for invalid JSON, 200 with no body otherwise.
+// Invalid events and events for another app_id are dropped silently; stored
+// events are keyed by event_id, like the ReplacingMergeTree table.
 type fakeCollector struct {
-	mu        sync.Mutex
-	key, app  string
-	stored    map[string]Event
-	requests  atomic.Int64
-	fail503   atomic.Int64 // answer the next N requests with 503
-	maxEvents int
+	mu       sync.Mutex
+	key, app string
+	stored   map[string]Event
+	requests atomic.Int64
+	fail503  atomic.Int64 // answer the next N requests with 503
+	maxBytes int
 }
 
 func (f *fakeCollector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -133,45 +135,31 @@ func (f *fakeCollector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body, _ := io.ReadAll(r.Body)
+	if len(body) > f.maxBytes {
+		http.Error(w, "", 413)
+		return
+	}
 	var raw map[string][]map[string]any
 	if err := json.Unmarshal(body, &raw); err != nil {
-		http.Error(w, "", 422)
+		http.Error(w, "", 400)
 		return
 	}
 	var b Batch
 	_ = json.Unmarshal(body, &b)
-	if len(b.Events) == 0 {
-		http.Error(w, "", 400)
-		return
-	}
-	if len(b.Events) > f.maxEvents {
-		http.Error(w, "", 413)
-		return
-	}
-	for i, ev := range b.Events {
-		if _, ok := raw["events"][i]["event_name"]; !ok {
-			http.Error(w, "", 422)
-			return
-		}
-		if _, err := time.Parse(time.RFC3339, ev.EventTimestamp); err != nil {
-			http.Error(w, "", 422)
-			return
-		}
-		if ev.AppID != f.app {
-			http.Error(w, "", 403)
-			return
-		}
-	}
 	f.mu.Lock()
-	for _, ev := range b.Events {
-		f.stored[ev.EventID] = ev
+	for i, ev := range b.Events {
+		_, hasName := raw["events"][i]["event_name"]
+		_, tsErr := time.Parse(time.RFC3339, ev.EventTimestamp)
+		if hasName && tsErr == nil && ev.AppID == f.app {
+			f.stored[ev.EventID] = ev
+		}
 	}
 	f.mu.Unlock()
-	fmt.Fprintf(w, `{"request_id":"x","accepted_events":%d}`, len(b.Events))
+	w.WriteHeader(http.StatusOK)
 }
 
 func newFake() *fakeCollector {
-	return &fakeCollector{key: "k", app: "com.example.game", stored: map[string]Event{}, maxEvents: 500}
+	return &fakeCollector{key: "k", app: "com.example.game", stored: map[string]Event{}, maxBytes: 1 << 20}
 }
 
 func TestSendDeliversWithRetriesAndDuplicates(t *testing.T) {
@@ -248,8 +236,8 @@ func TestRunNegative(t *testing.T) {
 	srv := httptest.NewServer(f)
 	defer srv.Close()
 	c := NewClient(srv.URL, "", "k", time.Second, false)
-	cases := RunNegative(context.Background(), c, "k", "r4", "com.example.game", "loadgen", 500)
-	if len(cases) != 8 {
+	cases := RunNegative(context.Background(), c, "k", "r4", "com.example.game", "loadgen", 1<<20)
+	if len(cases) != 7 {
 		t.Fatalf("got %d cases", len(cases))
 	}
 	for _, nc := range cases {
@@ -258,7 +246,7 @@ func TestRunNegative(t *testing.T) {
 		}
 	}
 	if len(f.stored) != 0 {
-		t.Fatalf("rejected requests stored %d events", len(f.stored))
+		t.Fatalf("rejected or dropped requests stored %d events", len(f.stored))
 	}
 }
 

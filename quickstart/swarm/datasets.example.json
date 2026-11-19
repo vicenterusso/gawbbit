@@ -1,0 +1,13 @@
+{
+  "datasets": [
+    {
+      "id": "team_a",
+      "app_ids": ["com.example.team_a_game"],
+      "main_exposed": false,
+      "clickhouse_password": "change_me_team_a_clickhouse_password",
+      "mcp_tokens": {
+        "agent": "change_me_team_a_mcp_token"
+      }
+    }
+  ]
+}

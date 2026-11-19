@@ -5,7 +5,9 @@
 #   ./deploy.sh --render   print the fully interpolated stack and exit
 #
 # .env is read with Compose dotenv rules (no shell evaluation), so JSON
-# values such as COLLECTOR_API_KEYS_JSON need no extra quoting.
+# values such as COLLECTOR_API_KEYS_JSON need no extra quoting. Needs bash and
+# docker; datasets.json is read with jq (the jq image is used when jq is not
+# installed).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -14,7 +16,7 @@ render=0
 case "${1:-}" in
   "") ;;
   --render) render=1 ;;
-  -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+  -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
   *) echo "usage: $0 [--render]" >&2; exit 2 ;;
 esac
 
@@ -53,65 +55,103 @@ done < "$env_file"
 
 stack="${RAWBBIT_STACK_NAME:-rawbbit}"
 [[ "$stack" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || die "RAWBBIT_STACK_NAME must be lowercase letters, digits, _ or -"
-aws_replica="${AWS_REPLICA_ENABLED:-0}"
 
 # --- refuse placeholders ----------------------------------------------------
 placeholders=()
 for key in "${env_keys[@]}"; do
-  [[ "$aws_replica" != 1 && "$key" == AWS_REPLICA_* ]] && continue
   [[ "${!key}" == *change_me* ]] && placeholders+=("$key")
 done
 ((${#placeholders[@]} == 0)) || die "replace the change_me values of: ${placeholders[*]}"
+[[ -n "${CLICKHOUSE_VECTOR_PASSWORD:-}" ]] || die "CLICKHOUSE_VECTOR_PASSWORD is required"
+[[ "${GEOIP_ENABLED:-0}" =~ ^[01]$ ]] || die "GEOIP_ENABLED must be 0 or 1"
+[[ "${MAX_REQUEST_BYTES:-1048576}" =~ ^[1-9][0-9]*$ ]] || die "MAX_REQUEST_BYTES must be a number of bytes"
 
-# SeaweedFS identities are generated as JSON from these values.
-for key in S3_WRITER_ACCESS_KEY S3_WRITER_SECRET_KEY S3_READER_ACCESS_KEY \
-           S3_READER_SECRET_KEY S3_ADMIN_ACCESS_KEY S3_ADMIN_SECRET_KEY; do
-  [[ -n "${!key:-}" ]] || die "$key is required"
-  [[ "${!key}" =~ ^[A-Za-z0-9+/=_-]+$ ]] || die "$key may only contain letters, digits and + / = _ -"
-done
-[[ "$S3_WRITER_ACCESS_KEY" != "$S3_READER_ACCESS_KEY" && "$S3_WRITER_ACCESS_KEY" != "$S3_ADMIN_ACCESS_KEY" && "$S3_READER_ACCESS_KEY" != "$S3_ADMIN_ACCESS_KEY" ]] \
-  || die "the writer, reader and admin S3 access keys must differ"
+# --- CORS: comma-separated origins -> one anchored regex for Caddy ----------
+origins="${CORS_ALLOW_ORIGINS:-}"
+if [[ "$origins" == "*" ]]; then
+  CORS_ORIGIN_REGEX='^.+$'
+elif [[ -z "${origins//[[:space:],]/}" ]]; then
+  CORS_ORIGIN_REGEX='^$'
+else
+  alternatives=()
+  IFS=',' read -ra list <<< "$origins"
+  for origin in "${list[@]}"; do
+    origin="${origin//[[:space:]]/}"
+    [[ -n "$origin" ]] || continue
+    [[ "$origin" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || die "CORS_ALLOW_ORIGINS: $origin is not an origin like https://game.example.com"
+    alternatives+=("$(printf '%s' "$origin" | sed 's/[.]/\\./g')")
+  done
+  CORS_ORIGIN_REGEX="^($(IFS='|'; echo "${alternatives[*]}"))\$"
+fi
+export CORS_ORIGIN_REGEX
 
-# --- generated files --------------------------------------------------------
+# --- generated secrets: Vector password and the datasets ---------------------
 umask 077
 mkdir -p .generated
-cat > .generated/seaweedfs-s3.json <<EOF
-{
-  "identities": [
-    {
-      "name": "rawbbit-writer",
-      "credentials": [{"accessKey": "${S3_WRITER_ACCESS_KEY}", "secretKey": "${S3_WRITER_SECRET_KEY}"}],
-      "actions": ["Read", "List", "Write"]
-    },
-    {
-      "name": "rawbbit-reader",
-      "credentials": [{"accessKey": "${S3_READER_ACCESS_KEY}", "secretKey": "${S3_READER_SECRET_KEY}"}],
-      "actions": ["Read", "List"]
-    },
-    {
-      "name": "rawbbit-admin",
-      "credentials": [{"accessKey": "${S3_ADMIN_ACCESS_KEY}", "secretKey": "${S3_ADMIN_SECRET_KEY}"}],
-      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
-    }
-  ]
-}
-EOF
+printf '%s' "$CLICKHOUSE_VECTOR_PASSWORD" > .generated/clickhouse_vector_password
+
+datasets_file="${RAWBBIT_DATASETS_FILE:-datasets.json}"
+if [[ -f "$datasets_file" ]]; then
+  jq() {
+    if command -v jq >/dev/null; then command jq "$@"
+    else docker run --rm -i ghcr.io/jqlang/jq:1.7.1 "$@"; fi
+  }
+  datasets_json=$(cat "$datasets_file")
+  problems=$(jq -r '
+    def bad($m): "  " + $m;
+    if (.datasets | type) != "array" then bad("\"datasets\" must be a list") else
+      (.datasets | to_entries[] | .key as $i | .value |
+        (if (.id | type) != "string" or (.id | test("^[a-z][a-z0-9_]{0,39}$") | not)
+           then bad("datasets[\($i)].id must match ^[a-z][a-z0-9_]{0,39}$") else empty end),
+        (if (.app_ids | type) != "array" or (.app_ids | length) == 0 or any(.app_ids[]; type != "string" or . == "")
+           then bad("datasets[\($i)].app_ids must be a non-empty list of app_ids") else empty end),
+        (if (.clickhouse_password | type) != "string" or (.clickhouse_password | length) < 12
+           then bad("datasets[\($i)].clickhouse_password must be a string of 12+ characters") else empty end),
+        (if (.clickhouse_password // "" | tostring | contains("change_me"))
+           then bad("datasets[\($i)].clickhouse_password is still change_me") else empty end),
+        (if (.mcp_tokens | type) != "object" or (.mcp_tokens | length) == 0 or any(.mcp_tokens[]; type != "string" or length < 16)
+           then bad("datasets[\($i)].mcp_tokens must map labels to tokens of 16+ characters") else empty end),
+        (if any(.mcp_tokens[]?; tostring | contains("change_me"))
+           then bad("datasets[\($i)].mcp_tokens still has change_me values") else empty end),
+        (if has("main_exposed") and (.main_exposed | type) != "boolean"
+           then bad("datasets[\($i)].main_exposed must be true or false") else empty end)
+      ),
+      ([.datasets[].id] | group_by(.) | map(select(length > 1)[0]) | .[] | bad("dataset id \(.) is used twice")),
+      ([.datasets[].app_ids[]?] | group_by(.) | map(select(length > 1)[0]) | .[] | bad("app_id \(.) is in more than one dataset"))
+    end' <<< "$datasets_json") || die "$datasets_file is not valid JSON"
+  [[ -z "$problems" ]] || die "$datasets_file:"$'\n'"$problems"
+
+  RAWBBIT_APP_DATASETS=$(jq -c '[.datasets[] | .id as $id | .app_ids[] | {key: ., value: $id}] | from_entries' <<< "$datasets_json")
+  jq -r '.datasets[] | [.id, .clickhouse_password] | @tsv' <<< "$datasets_json" > .generated/datasets.tsv
+  jq '{version: 1, datasets: [.datasets[] | {
+        id, endpoint_path: "/datasets/\(.id)/mcp", database: "dataset_\(.id)", table: "events",
+        main_exposed: (.main_exposed // false), clickhouse_user: "mcp_\(.id)",
+        clickhouse_password, bearer_tokens: .mcp_tokens}]}' <<< "$datasets_json" > .generated/mcp-datasets.json
+  echo "deploy: datasets: $(jq -r '[.datasets[].id] | join(", ")' <<< "$datasets_json")" >&2
+else
+  RAWBBIT_APP_DATASETS='{}'
+  : > .generated/datasets.tsv
+  printf '{"version": 1, "datasets": []}\n' > .generated/mcp-datasets.json
+fi
+export RAWBBIT_APP_DATASETS
 
 # --- content-addressed config and secret names -----------------------------
 # Swarm configs/secrets are immutable; a new name per content lets
 # `docker stack deploy` roll the services that use a changed file.
-ch="../vm_rawbbit_two/clickhouse"
 declare -A objects=(
   [CFG_CADDYFILE]=./Caddyfile
-  [CFG_NATS_CONF]=../vm_rawbbit_one/nats-server.conf
-  [CFG_CLICKHOUSE_RESOURCE_PROFILE]="$ch/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}"
-  [CFG_CLICKHOUSE_NAMED_COLLECTION]="$ch/config.d/raw-s3-named-collection.xml"
-  [CFG_CLICKHOUSE_USERS_PROFILE]="$ch/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}"
-  [CFG_CLICKHOUSE_SCHEMA]="$ch/schema_analytics_events.sql"
-  [CFG_CLICKHOUSE_SERVICE_USERS]="$ch/initdb.d/02_service_users.sh"
-  [CFG_CLICKHOUSE_DBT_OBSERVATION_GRANTS]=./clickhouse/03_dbt_observation_grants.sh
-  [CFG_POSTGRES_METABASE_INIT]=../vm_rawbbit_two/postgres/initdb.d/01_metabase_database.sh
-  [SECRET_SEAWEED_S3_JSON]=./.generated/seaweedfs-s3.json
+  [CFG_VECTOR_CONFIG]=./vector/vector.yaml
+  [CFG_VECTOR_GEOIP]="./vector/geoip-${GEOIP_ENABLED:-0}.yaml"
+  [CFG_CLICKHOUSE_RESOURCE_PROFILE]="./clickhouse/config.d/${CLICKHOUSE_CONFIG_PROFILE_FILE:-low-memory.xml}"
+  [CFG_CLICKHOUSE_BACKUPS]=./clickhouse/config.d/backups.xml
+  [CFG_CLICKHOUSE_USERS_PROFILE]="./clickhouse/users.d/${CLICKHOUSE_USERS_PROFILE_FILE:-low-memory-users.xml}"
+  [CFG_CLICKHOUSE_SCHEMA]=./clickhouse/schema.sql
+  [CFG_CLICKHOUSE_SETUP]=./clickhouse/setup.sh
+  [CFG_CLICKHOUSE_BACKUP]=./clickhouse/backup.sh
+  [CFG_POSTGRES_METABASE_INIT]=./postgres/01_metabase_database.sh
+  [SECRET_CLICKHOUSE_VECTOR_PASSWORD]=./.generated/clickhouse_vector_password
+  [SECRET_DATASETS_TSV]=./.generated/datasets.tsv
+  [SECRET_MCP_DATASETS_JSON]=./.generated/mcp-datasets.json
 )
 declare -a current_names=()
 for var in "${!objects[@]}"; do
@@ -124,7 +164,6 @@ for var in "${!objects[@]}"; do
 done
 
 stack_files=(-c stack.yml)
-[[ "$aws_replica" == 1 ]] && stack_files+=(-c stack.aws-replica.yml)
 
 if ((render)); then
   exec docker stack config "${stack_files[@]}"
@@ -146,7 +185,7 @@ case ${#data_nodes[@]} in
   *) die "more than one manager has rawbbit.data=true (${data_nodes[*]}); stateful services must have exactly one home" ;;
 esac
 
-echo "deploy: stack=$stack aws_replica=$aws_replica"
+echo "deploy: stack=$stack"
 docker stack deploy --detach=false --prune --with-registry-auth "${stack_files[@]}" "$stack"
 
 # --- drop configs/secrets from earlier deploys that nothing uses anymore -----

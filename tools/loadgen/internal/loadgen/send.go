@@ -214,8 +214,8 @@ func Send(ctx context.Context, cfg SendConfig) (SendResult, error) {
 		case <-ctx.Done():
 			stopped = true
 		}
-		// Re-send a duplicated batch a few batches later, well inside the
-		// NATS duplicate window, so deduplication is exercised.
+		// Re-send a duplicated batch a few batches later, so deduplication
+		// (same app_id and event_id) is exercised.
 		if len(dupQueue) > 0 && (remaining == 0 || gen.rng.IntN(4) == 0) {
 			d := dupQueue[0]
 			dupQueue = dupQueue[1:]

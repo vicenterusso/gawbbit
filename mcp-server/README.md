@@ -2,20 +2,17 @@
 
 This guide shows how to deploy the Rawbbit MCP server, optional Metabase, or both on one VM.
 
-The MCP server is a read-only analytical surface over a ClickHouse table that already contains Rawbbit events. It is not part of the ingestion path, and it does not replace the raw Parquet layer.
+The MCP server is a read-only analytical surface over a ClickHouse table that already contains Rawbbit events. It is not part of the ingestion path.
 
-Use this guide after you have a ClickHouse table such as `analytics.events` populated from Rawbbit raw Parquet.
+The [Swarm deployment](../quickstart/swarm/README.md) already runs it next to ClickHouse and Metabase. Use this guide to run the MCP server or Metabase on their own, against an existing ClickHouse table such as `analytics.events`.
 
 ```text
-Producer -> Collector API -> NATS JetStream -> Raw Writer -> Parquet in object storage
-                                                              |
-                                                              v
-                                                        ClickHouse
-                                                              |
-                                      +-----------------------+-----------------------+
-                                      |                                               |
-                                      v                                               v
-                              Rawbbit MCP server                                  Metabase
+game SDK -> Caddy -> Vector -> ClickHouse
+                                   |
+                     +-------------+-------------+
+                     |                           |
+                     v                           v
+             Rawbbit MCP server              Metabase
 ```
 
 ## What This Deploys
@@ -41,7 +38,7 @@ You need:
 - credentials for a ClickHouse user that can run read queries on that table
 - a generated bearer token for MCP access if exposing MCP outside a private network
 
-For the ClickHouse table setup, see [`../clickhouse/README.md`](../clickhouse/README.md).
+For the table definition, see [`../quickstart/swarm/clickhouse/schema.sql`](../quickstart/swarm/clickhouse/schema.sql).
 
 ## Runtime Shape
 
@@ -255,100 +252,62 @@ Do not expose MCP publicly without an authentication layer. Static bearer tokens
 <!-- dataset-mcp:start -->
 ## Optional multi-dataset runtime
 
-This optional runtime requires MCP image `0.0.3` or newer; `0.0.4` is the
-tested release. Set `MCP_SERVER_IMAGE` to that version tag before enabling the
-overlay. Do not rely on `latest` (the Compose default) or an unpublished tag for
-dataset endpoints.
+With `MCP_DATASETS_FILE` set to a version-1 registry, the server also serves
+one isolated endpoint per dataset. In the Swarm deployment, `deploy.sh`
+generates this registry from `datasets.json` and `clickhouse-setup` creates
+the matching databases and read-only users; see
+[Datasets](../quickstart/swarm/README.md#datasets). This section describes the
+registry for a standalone Compose deployment.
 
-The default Compose deployment remains unchanged when no registry is configured.
-For multiple datasets, use the opt-in `docker-compose.datasets.yml` overlay and
-an operator-created, protected version-1 `datasets-runtime.json` file. The
-overlay mounts only that runtime file read-only at
-`/run/rawbbit/datasets.json` and sets `MCP_DATASETS_FILE`. Keep the file outside
-Git and mode `0600`; ensure the operator and MCP service can read it. It
-contains enabled dataset metadata, restricted MCP ClickHouse credentials, and
-scoped bearer credentials; it must not contain ClickHouse administrator or
-BI/direct-user credentials.
+The file must be a regular file (not a symlink) that only its owner can read
+(mode `0600` or `0400`). It contains restricted ClickHouse credentials and
+bearer tokens; never commit it. The JSON contract is `version: 1` with a
+`datasets` array; each entry has `id`, `endpoint_path`, `database`, `table`,
+`main_exposed`, `clickhouse_user`, `clickhouse_password`, `bearer_tokens`
+(label to token) and optional `max_query_rows`, `max_sample_rows` and
+`max_execution_seconds`:
 
-The JSON contract is `version: 1` with a `datasets` array. Each enabled entry
-specifies its ID, endpoint path, database/table, main-exposure flag, restricted
-ClickHouse username/password, scoped bearer-token labels/values, and optional
-query limits. Resolve credential values into the protected runtime file; never
-commit that file or credential values.
-
-Example scoped endpoint paths are:
-
-```text
-https://mcp.example.com/datasets/team_a/mcp
-https://mcp.example.com/datasets/team_b/mcp
+```json
+{
+  "version": 1,
+  "datasets": [
+    {
+      "id": "team_a",
+      "endpoint_path": "/datasets/team_a/mcp",
+      "database": "dataset_team_a",
+      "table": "events",
+      "main_exposed": false,
+      "clickhouse_user": "mcp_team_a",
+      "clickhouse_password": "...",
+      "bearer_tokens": { "agent": "..." }
+    }
+  ]
+}
 ```
 
-The existing `/mcp` authentication stays in its current static-token or JWT
-domain. Every authenticated `/mcp` user gets the same set of datasets explicitly
-marked for main-endpoint exposure; this is not per-user authorization. Main
-tools discover/select only that set, and omitting dataset selection preserves
-the existing `analytics.events` target. A scoped endpoint is fixed to its
-dataset, offers no cross-dataset selector, and accepts only that dataset's
-configured bearer credentials. Scoped tokens do not authenticate `/mcp` or
-another scoped endpoint. Existing Caddy configurations already proxy the MCP
-hostname; no per-dataset proxy rule is needed.
+- A scoped endpoint such as `https://mcp.example.com/datasets/team_a/mcp` is
+  fixed to its dataset, offers no cross-dataset selector and accepts only that
+  dataset's bearer tokens. Scoped tokens do not authenticate `/mcp` or another
+  scoped endpoint. The existing Caddy configuration already proxies them.
+- The main `/mcp` endpoint keeps its static-token or JWT authentication.
+  Every authenticated `/mcp` user can also select the datasets marked
+  `main_exposed`; omitting the selection keeps the default
+  `analytics.events` target. This is not per-user authorization.
+- Each dataset must use a ClickHouse database other than the main
+  `CLICKHOUSE_DATABASE`, and its ClickHouse user should be read-only
+  (`readonly = 1`) with `SELECT` on that database only. Do not grant the main
+  MCP user access to datasets that are not `main_exposed`.
+- Datasets provide logical access separation, not resource isolation: they
+  share the ClickHouse server.
+- Removing a dataset and restarting the server removes its endpoint; it does
+  not drop its ClickHouse database, data or user.
 
-Each dataset must use a ClickHouse database different from the main endpoint's
-configured `CLICKHOUSE_DATABASE` (`analytics` in the VM-two deployment). For
-VM two, the protected provisioning contract carries non-secret `main_database`
-and `main_user` metadata. When the VM-two host provisioner runs, its preflight
-checks the configured main user for direct or transitive `SELECT`/`ALL` grants
-covering configured disabled or non-main-exposed dataset tables and historically
-registered tables retained in the journal that are not currently exposed on
-`/mcp`. It runs for all-disabled registries and for an empty registry when the
-journal remains; a fresh empty install skips the dataset preflight. A conflict
-aborts before provisioning and leaves the main user's existing grants unchanged.
-Narrow conflicting grants manually, then rerun the preflight. Standalone MCP
-Compose has no host-side preflight or provisioner.
-
-Dataset endpoints and ClickHouse grants provide logical access separation, not
-resource isolation: all datasets still share the same ClickHouse server's CPU,
-memory, storage, administrator, and host failure domain.
-
-For the VM-two deployment, `managed` provisioning can create missing databases,
-optionally create the compatible Rawbbit events table, and reconcile only
-explicitly owned restricted identities. `reference` mode checks an externally
-managed compatible table and restricted identity without changing ClickHouse
-schema or access entities. The VM-two host provisioner keeps its root-owned,
-mode-`0600` ownership journal at
-`/srv/rawbbit-two/clickhouse/datasets-ownership.json`; back it up with the
-ClickHouse state. The privileged `datasets-provision.json` file is separate,
-root-owned, mode `0600`, host-only, and is never mounted into MCP.
-
-Standalone MCP Compose has **no host-side provisioner**. Create and grant the
-dataset table and restricted ClickHouse user outside this package, then provide
-only the protected runtime file to MCP. Dataset registration does not ingest
-events: dbt remains the loader for the existing default `analytics.events`
-dataset in dbt mode, and it is not redirected to new tables. A new table needs
-a separately configured loader or backfill.
-
-From `mcp-server/`, validate and apply the standalone overlay with the protected
-runtime file in place:
+For the standalone overlay, from `mcp-server/`:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.datasets.yml config --quiet
 docker compose -f docker-compose.yml -f docker-compose.datasets.yml up -d --force-recreate mcp-server
 ```
-
-On VM two, stage and validate both protected files, wait for ClickHouse health,
-provision or verify datasets on the host, then atomically activate the runtime
-file and recreate MCP. A provisioning failure must not activate the staged MCP
-configuration. Removing or disabling an endpoint and recreating MCP revokes its
-MCP route/token access, but does not delete its ClickHouse database, table, data,
-or provisioner-managed MCP ClickHouse user, role, or grants. It also does not
-revoke separately managed direct ClickHouse credentials. Revoke database
-identities separately through an operator-reviewed offboarding procedure when
-required. The VM-two ownership journal retains registered database/table names
-as main-user isolation targets in its append-only `main_access_targets` list,
-including reference datasets after endpoint removal. These records are not
-ownership claims over external ClickHouse objects. See the [VM-two operations
-guide](../quickstart/vm_rawbbit_two/README.md) for staged activation, backup, and
-rollback details.
 
 <!-- dataset-mcp:end -->
 
@@ -451,8 +410,7 @@ Back up the Metabase PostgreSQL application database if dashboards, saved questi
 
 ## Operational Checklist
 
-- raw Parquet remains the rebuildable source of truth
-- ClickHouse can be rebuilt from raw storage if serving tables are lost or redesigned
+- ClickHouse is the source of truth: back it up (the Swarm stack runs a daily `BACKUP`)
 - MCP should be authenticated before public exposure
 - Caddy should be the only public ingress in the bundled deployment
 - ClickHouse and PostgreSQL ports should stay private
@@ -537,5 +495,4 @@ unavoidable differences:
 - [`../README.md`](../README.md)
 - [`../docs/architecture.md`](../docs/architecture.md)
 - [`../docs/configuration.md`](../docs/configuration.md)
-- [`../clickhouse/README.md`](../clickhouse/README.md)
-- [`../metabase/README.md`](../metabase/README.md)
+- [`../quickstart/swarm/README.md`](../quickstart/swarm/README.md)

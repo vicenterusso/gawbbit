@@ -1,67 +1,22 @@
 # Gawbbit
 
-**Gawbbit is a rewrite of [Rawbbit](https://github.com/mirlan-irokez/rawbbit) in Go.**
-All services and host helpers that were Python in Rawbbit (collector-api,
-raw-writer, the MCP server, the dbt-based ingestion runner and the VM-two
-helpers) are now static Go binaries for `linux/amd64` and `linux/arm64`, for
-example OCI Ampere A1. Contracts are unchanged: environment variables, ports,
-HTTP and MCP APIs, NATS messages, the Parquet layout, the SQL and the CLIs
-behave as in Rawbbit, so Gawbbit is a drop-in replacement for an existing
-Rawbbit deployment. See [Relationship to Rawbbit](#relationship-to-rawbbit).
+**Gawbbit is a simplified fork of [Rawbbit](https://github.com/mirlan-irokez/rawbbit),
+the self-hosted event pipeline for games.** Game clients send batched events
+over HTTP; [Vector](https://vector.dev/) validates them and inserts them into
+[ClickHouse](https://clickhouse.com/), which is the source of truth; the
+Rawbbit MCP server and Metabase read from ClickHouse. Everything runs as one
+Docker Swarm stack, on a single node or a small cluster, `linux/amd64` or
+`linux/arm64` (for example OCI Ampere A1).
 
-Component, binary, image and container names keep the `rawbbit` prefix
-(for example `rawbbit-collector-api` and `rawbbit-mcp-server`) so existing
-configuration, Compose files and Ansible inventories keep working.
+```text
+game SDK -> Caddy -> Vector -> ClickHouse (analytics.events) -> MCP / Metabase / SQL
+```
 
-The rest of this README describes the system. "Rawbbit" in it refers to the
-pipeline that both projects implement.
-
-Rawbbit is a self-hosted event telemetry pipeline for mobile and web games.
-It helps small teams collect player events, sessions, funnels, retention signals, economy events, monetization events, and backend game-service events while keeping ownership of the raw data.
-
-It was created for teams that want game analytics without making a proprietary vendor the center of their telemetry stack.
-The same pipeline also works for web apps, mobile apps, browser surfaces, and other event-producing products, but the OSS docs are written first for game developers operating their own stack.
-
-Game clients, web builds, mobile apps, and backend services send batched events over HTTP.
-Rawbbit validates and enriches those events in the collector, buffers them through [NATS JetStream](https://nats.io/), writes partitioned Parquet files to S3-compatible object storage such as [SeaweedFS](https://github.com/seaweedfs/seaweedfs), loads the raw layer into ClickHouse, and exposes the ClickHouse-backed data through MCP, Metabase, agents, and direct SQL access.
+The project keeps the Rawbbit names (`rawbbit-mcp-server`, `analytics.events`,
+the SDK packages) so the SDKs, plugins and MCP clients keep working. See
+[Relationship to Rawbbit](#relationship-to-rawbbit) for what changed.
 
 ![Rawbbit](./assets/Rawbbit.png)
-
-Main Rawbbit path:
-
-```text
-Producer -> Collector API -> NATS JetStream -> Raw Writer
-  -> S3-compatible object storage / SeaweedFS Parquet
-  -> scheduled Go ingestion runner
-  -> ClickHouse analytics.events
-  -> MCP / Metabase / agents / users
-```
-
-Optional BigQuery path:
-
-```text
-Producer -> Collector API -> NATS JetStream -> Raw Writer
-  -> object storage Parquet
-  -> BigQuery external table
-  -> SQLMesh base model
-```
-
-Storage note:
-- SeaweedFS/S3-compatible storage is the preferred OSS raw-storage path
-- GCS remains supported
-- the BigQuery external-table path remains a supported optional downstream path, not the main architecture
-
-Production-oriented OSS deployment is split into two provider-neutral VM
-guides:
-
-- VM one runs ingestion and raw object storage: Caddy, NATS JetStream,
-  collector-api, raw-writer, and SeaweedFS, with optional Dozzle log access
-- VM two runs analytics and access surfaces: ClickHouse, the scheduled
-  ingestion runner (Compose service `dbt-runner`), the Rawbbit MCP server,
-  Metabase, and Postgres for Metabase state, with optional Dozzle log access
-
-The boundary between the VMs is the raw Parquet layer in S3-compatible object
-storage.
 
 ## Table of contents
 
@@ -69,9 +24,8 @@ storage.
 - [Architecture](#architecture)
 - [Quickstart](#quickstart)
 - [Relationship to Rawbbit](#relationship-to-rawbbit)
-- [Published images](#published-images)
+- [Published image](#published-image)
 - [Testing and CI](#testing-and-ci)
-- [Configuration](#configuration)
 - [Repository layout](#repository-layout)
 - [Project status](#project-status)
 - [Documentation](#documentation)
@@ -79,274 +33,175 @@ storage.
 
 ## What is included
 
-This repository contains the public game-telemetry ingestion-to-analytics path:
-
-- `backend/collector-api` — HTTP ingestion service for player, gameplay, product, and server events
-- `backend/raw-writer` — JetStream consumer that writes partitioned Parquet files
-- `clickhouse/` — main analytical/query path for loading and querying raw game telemetry in ClickHouse
-- `dbt_project/` — scheduled Go ingestion runner (replaces Rawbbit's dbt Core project; the directory name is kept for compatibility) that loads bounded Parquet windows into `analytics.events`
-- `mcp-server/` — Rawbbit MCP server, MCP client setup, and combined MCP + Metabase deployment guide
-- AI agents and MCP clients such as Codex, OpenCode, and OpenClaw can connect to the Rawbbit MCP server endpoint for read-only analytics exploration
-- `metabase/` — optional standalone Metabase deployment guide
-- `sdk/rawbbit-unity/` — copy-in Unity C# SDK source, generic game-adapter template, and Editor/PlayMode test sources; Unity compilation and Android/iOS player/device validation are pending
-- `sdk/rawbbit-browser-game/` — self-contained browser-game JavaScript SDK source with a durable queue, consent integration guide, tests, and a copy-in game-adapter template. The source builds without another SDK folder; the separate `@rawbbit/browser-game` npm package remains private and unpublished.
-- `sqlmesh_project/` — optional [SQLMesh](https://sqlmesh.readthedocs.io/en/stable/) project for the BigQuery external-table path
-- `plugins/rawbbit-game-events/` — coding-agent plugins for Claude and Codex that inspect a Unity or browser-JavaScript game, propose a reviewable event map, and integrate approved events with the bundled SDKs. See [`docs/agent-plugins.md`](docs/agent-plugins.md) for downloads and install steps.
+- `quickstart/swarm/` — the deployment: the Swarm stack, the Caddy and Vector
+  configuration, the ClickHouse schema, setup and backup scripts, `deploy.sh`
+  and an end-to-end test
+- `mcp-server/` — the Rawbbit MCP server (Go): read-only tools for event
+  discovery, sampling, guarded SQL, DAU and funnels over ClickHouse, for AI
+  agents and MCP clients such as Claude, Codex, OpenCode and OpenClaw
+- `sdk/rawbbit-unity/` — copy-in Unity C# SDK source with a durable queue,
+  consent handling, a game-adapter template and Editor/PlayMode tests
+- `sdk/rawbbit-browser-game/` — browser-game JavaScript SDK source with a
+  durable queue, consent integration guide, tests and a game-adapter template
+- `plugins/rawbbit-game-events/` — coding-agent plugins for Claude and Codex
+  that inspect a Unity or browser-JavaScript game, propose a reviewable event
+  map and integrate approved events with the bundled SDKs. See
+  [`docs/agent-plugins.md`](docs/agent-plugins.md)
+- `tools/loadgen/` — `rawbbit-loadgen`, a synthetic event generator that also
+  checks that ClickHouse holds every accepted event exactly once
 
 ## Architecture
 
-The system is built around a few explicit boundaries:
+- **Caddy** terminates TLS, answers CORS preflights for browser games, limits
+  the request size (413) and passes the client address to Vector.
+- **Vector** checks the `X-API-Key` (each key may send one `app_id`), splits
+  each batch, validates every event, hashes the client IP, optionally adds the
+  country from a GeoIP database and inserts rows into ClickHouse in batches.
+  A request is answered `200` only after ClickHouse stored its events. Invalid
+  events are dropped and logged with the reason; the rest of the batch is kept.
+- **ClickHouse** holds `analytics.events`, a `ReplacingMergeTree` keyed by
+  `(app_id, event_id)`, so SDK and Vector retries collapse into one row. A
+  daily native `BACKUP` keeps local copies and can also write to S3.
+- **Datasets** (optional) route chosen `app_id`s to their own database
+  `dataset_<id>.events` with their own read-only MCP endpoint.
+- **MCP server and Metabase** read from ClickHouse.
 
-- game clients, web builds, mobile apps, and backend services produce event batches
-- the collector accepts and validates player and gameplay events
-- [NATS JetStream](https://nats.io/) separates request handling from storage writes
-- the raw writer lands durable Parquet files in object storage
-- raw Parquet is the system-of-record boundary for downstream telemetry work
-- the scheduled Go ingestion runner reconciles bounded Parquet windows into `analytics.events`; the shell loader remains a mutually exclusive legacy fallback
-- ClickHouse is the main analytical database and serving path for retention, funnel, session, and event analysis
-- MCP, Metabase, agents, and direct SQL are consumption surfaces on top of ClickHouse
-- downstream modeling can evolve without changing the ingestion contract
-
-For the deeper architecture note, see [`docs/architecture.md`](docs/architecture.md).
+See [`docs/architecture.md`](docs/architecture.md).
 
 ## Quickstart
 
-For automated provider-neutral deployment of either VM or both, see
-[`quickstart/ansible/README.md`](quickstart/ansible/README.md). The Ansible path
-keeps SSH-key and `deploy` account creation manual, then configures the hosts,
-installs Docker and authenticated Dozzle, renders Vault-backed private
-configuration, starts Compose, and runs health checks.
+Follow [`quickstart/swarm/README.md`](quickstart/swarm/README.md). In short:
 
-For the recommended provider-neutral ingestion VM deployment guide, see
-[`quickstart/vm_rawbbit_one/README.md`](quickstart/vm_rawbbit_one/README.md).
-It deploys Caddy, NATS JetStream, collector-api, raw-writer, and SeaweedFS with
-persistent host storage. It also documents optional Dozzle browser log access
-and Dozzle MCP access for inspecting ingestion VM containers.
+```bash
+cd quickstart/swarm
+cp .env.example .env              # replace every change_me value
+sudo ./bootstrap-data-node.sh     # on the data node
+docker node update --label-add rawbbit.data=true <data-node>
+./deploy.sh
+```
 
-For the matching analytics VM deployment guide, see
-[`quickstart/vm_rawbbit_two/README.md`](quickstart/vm_rawbbit_two/README.md).
-It deploys ClickHouse, the persistent ingestion runner, the Rawbbit MCP
-server, Metabase, and Postgres for Metabase state. The runner reads bounded
-Parquet windows from the VM-one S3-compatible endpoint and loads them into
-ClickHouse. It also documents optional Dozzle browser log access and Dozzle MCP
-access for inspecting analytics VM containers.
-
-To run everything as one Docker Swarm stack (single node or a cluster, with
-databases pinned to the master and replicated collectors), see
-[`quickstart/swarm/README.md`](quickstart/swarm/README.md). It also includes
-an optional off-site copy of the raw Parquet layer to AWS S3.
-
-The shortest path to a working ingestion setup is:
-
-1. deploy VM one with the [Ansible quickstart](quickstart/ansible/README.md)
-   (or the manual [VM-one guide](quickstart/vm_rawbbit_one/README.md))
-2. send a test player event to `POST /v1/events:batch`
-3. verify that Parquet files land in object storage
-
-For the test event and landing check, see
-[VM-one verification](quickstart/vm_rawbbit_one/README.md#verification).
+Then point a game SDK at `https://<COLLECTOR_PUBLIC_HOSTNAME>` or send a
+test batch with [`rawbbit-loadgen`](tools/loadgen/README.md).
 
 ## Relationship to Rawbbit
 
-Gawbbit started from the Rawbbit repository
-([`mirlan-irokez/rawbbit`](https://github.com/mirlan-irokez/rawbbit)) and keeps
-its full history. The SDKs, the ClickHouse SQL, the Compose and Ansible
-deployment guides, the plugins and the documentation come from Rawbbit. What
-changed is the implementation language of the runtime code:
+Gawbbit started from the Rawbbit repository and keeps its history. Rawbbit's
+pipeline was designed for teams that want a warehouse-neutral raw layer:
 
-| Component | Rawbbit | Gawbbit |
+```text
+Rawbbit:  collector -> NATS JetStream -> raw-writer -> Parquet on S3/SeaweedFS
+            -> hourly ingestion runner -> ClickHouse (or BigQuery)
+Gawbbit:  Caddy -> Vector -> ClickHouse
+```
+
+Gawbbit drops the Parquet raw layer and the BigQuery/SQLMesh path and makes
+ClickHouse the source of truth. That removes the collector, NATS, the
+raw-writer, SeaweedFS, the hourly runner and its cron, and the two-VM
+Compose/Ansible guides. Events reach ClickHouse in about a second instead of
+up to an hour. What remains is configuration plus the MCP server, the SDKs,
+the plugins and the load generator.
+
+Differences a client can see:
+
+| | Rawbbit collector | Gawbbit (Caddy + Vector) |
 |---|---|---|
-| `backend/collector-api` | Python (FastAPI) | Go |
-| `backend/raw-writer` | Python (pyarrow) | Go (arrow-go) |
-| `mcp-server` | Python | Go (official MCP Go SDK) |
-| `dbt_project` ingestion runner | Python wrapper around dbt Core + dbt-clickhouse | Go runner issuing the same SQL dbt-clickhouse 1.9.8 generated (`delete_insert` strategy) |
-| VM-two helpers `rawbbit-deploy-dbt-runner`, `rawbbit-provision-datasets` | Python scripts | Go binaries, built by Ansible on the controller for the VM architecture |
-| Plugin `verify-bundle` / `validate-plugin` scripts | Python | Go (`go run ./scripts/verify-bundle`) |
+| Success response | `200 {"request_id", "accepted_events"}` | `200` with an empty body, after ClickHouse stored the events |
+| Missing or invalid API key | 401 | 401 |
+| `app_id` not allowed for the key | 403 for the whole request | the event is dropped and logged |
+| Invalid JSON | 422 | 400 |
+| Invalid event (missing field, bad timestamp) | 422 for the whole request | the event is dropped and logged |
+| Empty `events` | 400 | 200 |
+| Too large | 413 (bytes or events count) | 413 (bytes, `MAX_REQUEST_BYTES`) |
 
-Each component is a separate Go module (Go 1.24+) that builds as a static
-`CGO_ENABLED=0` binary for `linux/amd64` and `linux/arm64`. The Dockerfiles
-use `TARGETOS`/`TARGETARCH`, so multi-arch images build with
-`docker buildx build --platform linux/amd64,linux/arm64 ...`.
+Both SDKs accept the empty `200` as an acknowledgment and still check
+`accepted_events` when a body reports it, so they work with either backend.
 
-Parity with Rawbbit was checked by differential testing: Python and Go ran
-side by side on the same inputs and their outputs were compared (HTTP
-responses, NATS messages, Parquet files and object keys, ClickHouse tables,
-DDL, state files, exit codes and logs). The recorded Python outputs are kept as
-goldens in each module's `testdata/`, so the tests still check parity without
-Python. Deliberate differences are listed in each component README under
-"Go rewrite notes".
+The last state with the Go collector, NATS, raw-writer and runner is the git
+tag `go-collector-final`.
 
-The optional `sqlmesh_project/` is unchanged. It is configuration for the
-third-party SQLMesh tool (itself a Python application) and contains no
-Rawbbit Python code.
+## Published image
 
-## Published images
-
-The [CI workflow](.github/workflows/ci.yml) builds the four Go images for
-`linux/amd64` and `linux/arm64` and pushes them to the GitHub Container
+The [CI workflow](.github/workflows/ci.yml) builds the MCP server image for
+`linux/amd64` and `linux/arm64` and pushes it to the GitHub Container
 Registry of the repository owner when a release tag (`v*`) is pushed, after
-every test job has passed:
-
-- `ghcr.io/<owner>/rawbbit-collector-api`
-- `ghcr.io/<owner>/rawbbit-raw-writer`
-- `ghcr.io/<owner>/rawbbit-mcp-server`
-- `ghcr.io/<owner>/rawbbit-dbt-runner`
-
-A `v1.2.3` tag publishes `1.2.3`, `1.2` and `latest`; pin a version in
-deployments. Ordinary pushes only run the tests. To release:
+every test job passed: `ghcr.io/<owner>/rawbbit-mcp-server`. A `v1.2.3` tag
+publishes `1.2.3`, `1.2` and `latest`; pin a version in deployments. Ordinary
+pushes only run the tests. To release:
 
 ```bash
 git tag v1.0.0 && git push gawbbit v1.0.0
 ```
 
 Packages of a private repository are private: log in on every node
-(`docker login ghcr.io` with a token that has `read:packages`) and deploy with
-`--with-registry-auth`, which the Swarm `deploy.sh` does.
+(`docker login ghcr.io` with a token that has `read:packages`); `deploy.sh`
+deploys with `--with-registry-auth`. Caddy, Vector, ClickHouse, Postgres and
+Metabase use their upstream images.
 
-The quickstart Compose files and Ansible defaults still pin the Rawbbit images
-below. Those were built from the Python implementation and are `linux/amd64`
-only, so they do not run on Arm hosts such as OCI Ampere:
-
-- `ghcr.io/mirlan-irokez/rawbbit-collector-api:0.1.10`
-- `ghcr.io/mirlan-irokez/rawbbit-raw-writer:0.1.11`
-- `ghcr.io/mirlan-irokez/rawbbit-mcp-server:latest` (currently 0.0.4; the Ansible default pins 0.0.2)
-- `ghcr.io/mirlan-irokez/rawbbit-dbt-runner:0.1.1`
-
-The Go services implement the behavior of those releases, including the
-collector-api 0.1.10 validation envelope (HTTP 422 with only `type`, `loc` and
-`msg`, at most 20 entries) and the MCP 0.0.4 Nullable JSON fix. See
-[Rawbbit](https://github.com/mirlan-irokez/rawbbit) for the release history.
-
-To build an image yourself, run buildx from the service folder, for example:
+To build the image yourself:
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -t <registry>/rawbbit-collector-api:<tag> --push backend/collector-api
+  -t <registry>/rawbbit-mcp-server:<tag> --push mcp-server
 ```
-
-Set the images in `quickstart/swarm/.env` for the Swarm stack, in
-`quickstart/vm_rawbbit_one/docker-compose.yml` for VM one, and through
-`DBT_RUNNER_IMAGE` and `MCP_SERVER_IMAGE` for VM two. With Ansible, set
-`rawbbit_two_dbt_runner_image` and `rawbbit_two_mcp_image`.
-
-Secrets are not baked into these images. Provide API keys, storage credentials, ClickHouse passwords, and MCP bearer tokens through private `.env` files or secret management.
 
 ## Testing and CI
 
-Three levels of tests, all run by [`ci.yml`](.github/workflows/ci.yml) on every
-push and pull request:
+Three levels, all run by [`ci.yml`](.github/workflows/ci.yml) on every push
+and pull request:
 
 | Level | What | Run locally |
 |---|---|---|
-| Unit | `go test -race ./...` in each of the nine Go modules (including the Python parity goldens), gofmt, vet, amd64/arm64 cross-compile; the browser SDK's `npm test` | `cd <module> && go test ./...` |
-| Integration | collector and raw-writer against NATS JetStream and SeaweedFS, the ingestion runner, MCP server and dataset provisioner against ClickHouse (disposable containers) | [`scripts/test-integration.sh`](scripts/test-integration.sh) |
-| End to end | builds the images, deploys the Swarm stack on a single-node swarm and runs [`rawbbit-loadgen`](tools/loadgen/README.md): events through Caddy, collectors, NATS, raw-writers, SeaweedFS, the runner and ClickHouse, checked through the MCP endpoint | [`quickstart/swarm/e2e.sh --build`](quickstart/swarm/e2e.sh) |
+| Unit | `go test -race ./...`, gofmt, vet and amd64/arm64 cross-compile for the MCP server, the plugins and the load generator; the plugin SDK bundle check; the browser SDK's `npm test` | `cd <module> && go test ./...` |
+| Integration | MCP server parity cases against a disposable ClickHouse | [`scripts/test-integration.sh`](scripts/test-integration.sh) |
+| End to end | deploys the Swarm stack on a single-node swarm; [`rawbbit-loadgen`](tools/loadgen/README.md) sends events, rejected requests, dropped events and duplicates through Caddy and two Vector replicas, then checks through MCP that ClickHouse holds every accepted event exactly once; also checks a dataset and its own MCP endpoint, CORS, backups and MCP auth | [`quickstart/swarm/e2e.sh --build`](quickstart/swarm/e2e.sh) |
 
 The image job runs only for a `v*` tag, and only when all three pass.
-[`rawbbit-loadgen`](tools/loadgen/README.md) also works against a real
-deployment, for load tests or a post-deploy smoke test.
-
-## Configuration
-
-The ingestion VM uses `quickstart/vm_rawbbit_one/.env.example` (the Ansible
-path renders the same variables from
-`quickstart/ansible/roles/rawbbit_one/templates/env.j2`); the ClickHouse
-analytics VM uses `quickstart/vm_rawbbit_two/.env.example`.
-
-Important configuration groups:
-
-- NATS and stream settings
-- collector API limits, API keys, CORS settings, and optional GeoIP-related attribution requirements
-- raw-writer batching and ACK behavior
-- object-storage bucket, prefix, and credentials
-- ingestion runner ownership, reconciliation windows, backfill chunking, and ClickHouse limits
-
-For the grouped configuration guide, see [`docs/configuration.md`](docs/configuration.md).
 
 ## Repository layout
 
 ```text
-backend/
-  collector-api/   HTTP ingestion service
-  raw-writer/      Parquet landing worker
-sqlmesh_project/   Optional BigQuery SQLMesh starter model
-clickhouse/        Main ClickHouse query/loading path
-dbt_project/       Scheduled ClickHouse ingestion runner (Go)
-mcp-server/        Rawbbit MCP server and optional Metabase deploy path
-metabase/          Metabase OSS ver. deploy instructions
-sdk/rawbbit-unity/ Copy-in Unity SDK source, integration guide, and tests
+quickstart/swarm/  The deployment (stack, Caddy, Vector, ClickHouse, scripts, e2e)
+mcp-server/        Rawbbit MCP server (Go)
+sdk/rawbbit-unity/ Copy-in Unity SDK source, integration guide and tests
 sdk/rawbbit-browser-game/ Browser-game JavaScript SDK source and integration guide
 plugins/rawbbit-game-events/
   claude/          Claude plugin (skills only) with bundled SDKs
   codex/           Codex plugin with bundled SDKs and optional SDK catalog
-.claude-plugin/    Claude Code plugin marketplace for this repository
-.agents/plugins/   Codex plugin marketplace for this repository
-quickstart/        Provider-neutral VM and Docker Swarm deployment guides
 tools/loadgen/     Synthetic event load generator and end-to-end verifier
 scripts/           Integration test runner
-docs/              OSS documentation
+docs/              Documentation
 ```
-
-Component reference notes:
-
-- [`backend/README.md`](backend/README.md)
-- [`backend/collector-api/README.md`](backend/collector-api/README.md)
-- [`backend/raw-writer/README.md`](backend/raw-writer/README.md)
-- [`clickhouse/README.md`](clickhouse/README.md)
-- [`dbt_project/README.md`](dbt_project/README.md)
-- [`mcp-server/README.md`](mcp-server/README.md)
-- [`metabase/README.md`](metabase/README.md)
 
 ## Project status
 
-Current maturity:
-
-- player event ingestion path is implemented
-- raw Parquet landing path is implemented
-- raw storage backend selection is implemented for both GCS and S3-compatible targets
-- SeaweedFS/S3-compatible storage is the preferred OSS raw-storage path
-- scheduled loading from raw Parquet into ClickHouse by the Go ingestion runner is the main analytical/query path for player telemetry; the legacy shell loader remains available for rollback
-- the runner contains one ingestion model plus data tests; staging and mart models are intentionally deferred until their requirements are defined
-- Rawbbit MCP server can expose a read-only analytical tool surface over a configured Rawbbit ClickHouse events table
-- AI agents and MCP clients can use that MCP surface without direct access to the ingestion runtime
-- Metabase can be deployed separately or together with the Rawbbit MCP server package
-- BigQuery external-table querying is supported as an optional path
-- [SQLMesh](https://sqlmesh.readthedocs.io/en/stable/) is included as an optional starter layer for the BigQuery path
-- The copy-in Unity SDK is a source implementation; Unity Editor compilation, PlayMode tests, and Android/iOS player/device validation are not yet complete, so production compatibility is not established
-- The browser-game SDK source is included and builds independently of other SDK folders; the separate npm package remains private and unpublished
-- The browser-game SDK feature-checks secure top-level capabilities and has a passing Playwright run for Chromium, Firefox, and WebKit; no exact browser/version support matrix or real Safari/mobile-device validation is established.
-- The Rawbbit Game Event Tracking plugins are downloadable from the [Rawbbit GitHub releases](https://github.com/mirlan-irokez/rawbbit/releases); Gawbbit has not published plugin releases. The Claude plugin is submitted to Anthropic's plugin directory and the Codex plugin is not yet listed in OpenAI's directory; until then, install them from the release ZIPs as described in [`docs/agent-plugins.md`](docs/agent-plugins.md).
-
-The current release is intentionally narrow: it focuses on reliable player-event ingestion, durable raw storage, ClickHouse-backed analytics, and agent/BI access on top of that serving layer.
-
-The included [SQLMesh](https://sqlmesh.readthedocs.io/en/stable/) model is intentionally small. It reads from the BigQuery external table over the raw Parquet layer and serves as an optional BigQuery starter path rather than the central Rawbbit modeling layer.
+- Event intake, validation, deduplication, dataset routing, backups and the
+  MCP/Metabase access layer are implemented and covered by the end-to-end test.
+- The copy-in Unity SDK is a source implementation; Unity Editor compilation,
+  PlayMode tests and Android/iOS player/device validation are not yet
+  complete, so production compatibility is not established.
+- The browser-game SDK builds independently of other SDK folders and has a
+  passing Playwright run for Chromium, Firefox and WebKit; no exact
+  browser/version support matrix or real Safari/mobile-device validation is
+  established. The npm package remains private and unpublished.
+- The Rawbbit Game Event Tracking plugins are downloadable from the
+  [Rawbbit GitHub releases](https://github.com/mirlan-irokez/rawbbit/releases);
+  Gawbbit has not published plugin releases. Install them from the release
+  ZIPs as described in [`docs/agent-plugins.md`](docs/agent-plugins.md).
 
 ## Documentation
 
+- [`quickstart/swarm/README.md`](quickstart/swarm/README.md) — deployment, datasets, backups and operations
 - [`docs/architecture.md`](docs/architecture.md)
-- [`quickstart/ansible/README.md`](quickstart/ansible/README.md)
-- [`quickstart/vm_rawbbit_one/README.md`](quickstart/vm_rawbbit_one/README.md)
-- [`quickstart/vm_rawbbit_two/README.md`](quickstart/vm_rawbbit_two/README.md)
 - [`docs/configuration.md`](docs/configuration.md)
-- [`clickhouse/README.md`](clickhouse/README.md)
-- [`dbt_project/README.md`](dbt_project/README.md)
-- [`mcp-server/README.md`](mcp-server/README.md) — includes Codex, OpenCode, and OpenClaw MCP client examples
-- [`metabase/README.md`](metabase/README.md)
-- [`sdk/rawbbit-unity/README.md`](sdk/rawbbit-unity/README.md) — Unity SDK installation, behavior, and validation status
+- [`mcp-server/README.md`](mcp-server/README.md) — includes Codex, OpenCode and OpenClaw MCP client examples
+- [`tools/loadgen/README.md`](tools/loadgen/README.md)
+- [`sdk/rawbbit-unity/README.md`](sdk/rawbbit-unity/README.md) — Unity SDK installation, behavior and validation status
 - [`sdk/rawbbit-unity/INTEGRATION.md`](sdk/rawbbit-unity/INTEGRATION.md) — game-adapter and consent integration
 - [`sdk/rawbbit-browser-game/README.md`](sdk/rawbbit-browser-game/README.md) — browser-game SDK installation and API overview
-- [`sdk/rawbbit-browser-game/INTEGRATION.md`](sdk/rawbbit-browser-game/INTEGRATION.md) — host consent, storage, delivery, and recovery integration
-- [`docs/browser-game-sdk.md`](docs/browser-game-sdk.md) — browser-game SDK local installation, integration, privacy, limits, and validation status
+- [`sdk/rawbbit-browser-game/INTEGRATION.md`](sdk/rawbbit-browser-game/INTEGRATION.md) — host consent, storage, delivery and recovery integration
+- [`docs/browser-game-sdk.md`](docs/browser-game-sdk.md) — browser-game SDK local installation, integration, privacy, limits and validation status
 - [`docs/agent-plugins.md`](docs/agent-plugins.md) — download and install the Claude and Codex game-events plugins
-- [`plugins/rawbbit-game-events/claude/README.md`](plugins/rawbbit-game-events/claude/README.md) — Claude plugin: what it runs and sends, privacy, and support
-- [`plugins/rawbbit-game-events/codex/README.md`](plugins/rawbbit-game-events/codex/README.md) — Codex plugin: what it runs and sends to the SDK catalog, privacy, and support
 
 ## License
 
 This project is released under the Apache License 2.0, like Rawbbit. See [`LICENSE`](LICENSE).
-
----
-
-## Inspired by
-
-- [awesome-data-engineering](https://github.com/igorbarinov/awesome-data-engineering) — for the broader data engineering ecosystem

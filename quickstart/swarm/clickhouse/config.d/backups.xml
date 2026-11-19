@@ -1,0 +1,7 @@
+<clickhouse>
+    <!-- BACKUP ... TO File('<db>/<stamp>.zip') writes under /backups, the
+         bind mount ${RAWBBIT_DATA_ROOT}/clickhouse/backups (see backup.sh). -->
+    <backups>
+        <allowed_path>/backups/</allowed_path>
+    </backups>
+</clickhouse>

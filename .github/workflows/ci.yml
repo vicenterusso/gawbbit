@@ -1,9 +1,9 @@
 name: CI
 
-# Unit tests -> integration tests + Swarm end-to-end load test -> images.
-# Every push and pull request runs the tests (the end-to-end job builds
-# throwaway amd64 images on the runner). Multi-arch images are published to
-# GHCR only for a release tag (v*), after every test job passed.
+# Unit tests -> integration tests + Swarm end-to-end load test -> image.
+# Every push and pull request runs the tests (the end-to-end job builds a
+# throwaway amd64 MCP image on the runner). The multi-arch MCP server image is
+# published to GHCR only for a release tag (v*), after every test job passed.
 
 on:
   push:
@@ -32,14 +32,9 @@ jobs:
       fail-fast: false
       matrix:
         module:
-          - backend/collector-api
-          - backend/raw-writer
-          - dbt_project
           - mcp-server
           - plugins/rawbbit-game-events/claude
           - plugins/rawbbit-game-events/codex
-          - quickstart/vm_rawbbit_two/clickhouse/provisioner
-          - quickstart/vm_rawbbit_two/deployer
           - tools/loadgen
     defaults:
       run:
@@ -54,11 +49,6 @@ jobs:
           go-version-file: ${{ matrix.module }}/go.mod
           cache-dependency-path: ${{ matrix.module }}/go.*
 
-      # The deployer's rendering tests run ansible-playbook when it is present.
-      - name: Install Ansible for the deployer rendering tests
-        if: matrix.module == 'quickstart/vm_rawbbit_two/deployer'
-        run: pipx install 'ansible-core==2.19.11'
-
       - name: gofmt
         run: test -z "$(gofmt -l . | tee /dev/stderr)"
 
@@ -72,6 +62,13 @@ jobs:
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build ./...
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build ./...
+
+      # The plugins ship SDK snapshots with a hash manifest.
+      - name: Verify the plugin and its SDK bundle
+        if: startsWith(matrix.module, 'plugins/')
+        run: |
+          go run ./scripts/validate-plugin
+          go run ./scripts/verify-bundle
 
   sdk-js:
     name: unit browser SDK
@@ -94,7 +91,7 @@ jobs:
       - run: npm run test:source-isolation
 
   integration:
-    name: integration (NATS, SeaweedFS, ClickHouse)
+    name: integration (MCP parity on ClickHouse)
     needs: go-unit
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -104,9 +101,9 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version-file: backend/collector-api/go.mod
-          cache-dependency-path: "**/go.sum"
-      - name: Run every integration suite on disposable containers
+          go-version-file: mcp-server/go.mod
+          cache-dependency-path: mcp-server/go.sum
+      - name: Run the integration suites on a disposable ClickHouse
         run: scripts/test-integration.sh
 
   e2e:
@@ -122,7 +119,7 @@ jobs:
         with:
           go-version-file: tools/loadgen/go.mod
           cache-dependency-path: tools/loadgen/go.mod
-      - name: Build images, deploy the stack and run rawbbit-loadgen
+      - name: Build the MCP image, deploy the stack and run rawbbit-loadgen
         env:
           E2E_EVENTS: ${{ inputs.e2e_events || '3000' }}
         run: quickstart/swarm/e2e.sh --build
@@ -140,10 +137,7 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - { name: rawbbit-collector-api, context: backend/collector-api }
-          - { name: rawbbit-raw-writer, context: backend/raw-writer }
           - { name: rawbbit-mcp-server, context: mcp-server }
-          - { name: rawbbit-dbt-runner, context: dbt_project }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -164,8 +158,8 @@ jobs:
           labels: |
             org.opencontainers.image.title=${{ matrix.image.name }}
 
-      # The runner image runs `apk add` in its arm64 stage; the Go stages
-      # cross-compile natively.
+      # The Go build stage cross-compiles natively; QEMU covers the final
+      # arm64 stage.
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 

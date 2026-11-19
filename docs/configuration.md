@@ -1,237 +1,78 @@
 # Configuration
 
-The canonical environment-variable reference for the ingestion VM is `quickstart/vm_rawbbit_one/.env.example`. The Ansible path renders the same variables from `quickstart/ansible/roles/rawbbit_one/templates/env.j2`.
+Every setting lives in [`quickstart/swarm/.env.example`](../quickstart/swarm/.env.example);
+copy it to `.env` and run `./deploy.sh`. This page groups the settings by
+responsibility. Optional datasets are configured in `datasets.json` (see the
+[Swarm guide](../quickstart/swarm/README.md#datasets)).
 
-This guide groups the main settings by responsibility.
+## Images and scaling
 
-## Ansible deployment configuration
+- `MCP_SERVER_IMAGE` — the only Rawbbit image; CI publishes it for every
+  release tag
+- `VECTOR_IMAGE`, `CLICKHOUSE_IMAGE`, `CADDY_IMAGE`, `POSTGRES_IMAGE`,
+  `METABASE_IMAGE` — optional overrides of the pinned upstream images
+- `VECTOR_REPLICAS`, `VECTOR_MAX_REPLICAS_PER_NODE`, `MCP_SERVER_REPLICAS`,
+  `METABASE_REPLICAS`
 
-The environment variables below remain the runtime contract. The automated
-deployment path renders them from operator inputs instead of requiring manual
-`.env` editing on each VM:
+## Public hostnames
 
-- `quickstart/ansible/inventory.yml` defines target hosts and the SSH user
-- `quickstart/ansible/group_vars/all/main.yml` defines non-secret desired state,
-  including public hostnames, firewall policy, resource profiles, and deployment
-  choices
-- `quickstart/ansible/group_vars/all/vault.yml` is encrypted and defines API
-  keys, passwords, salts, and object-storage credentials
+- `COLLECTOR_PUBLIC_HOSTNAME` — where the SDKs send events
+- `MCP_PUBLIC_HOSTNAME`
+- `METABASE_PUBLIC_HOSTNAME`
 
-Create those files from their tracked `.example` templates. They remain on the
-Ansible workstation; the playbooks render only the required private runtime
-files on each VM. See the
-[Ansible quickstart](../quickstart/ansible/README.md) for setup, encryption,
-independent VM deployment, and recovery instructions.
+Caddy obtains certificates for them; point their DNS records at the data node.
 
-## NATS and stream settings
+## Event collector
 
-Main variables:
+- `COLLECTOR_API_KEYS_JSON` — `{"<api key>": "<app_id>", ...}`; each key may
+  send events for exactly one `app_id`
+- `IP_HASH_SALT` — salt of `ingest_ip_hash`; changing it breaks the link
+  between old and new hashes of the same address
+- `MAX_REQUEST_BYTES` — larger bodies get `413` (default 1 MiB)
+- `CORS_ALLOW_ORIGINS` — comma-separated browser origins allowed to post
+  events, `*` for any, empty for none
+- `CORS_MAX_AGE_SECONDS` — how long browsers cache a preflight
+- `GEOIP_ENABLED`, `GEOIP_HOST_DIR` — optional country lookup from
+  `GEOIP_HOST_DIR/dbip-country-lite.mmdb`
+- `RAWBBIT_DATASETS_FILE` — dataset file (default `datasets.json`)
 
-- `NATS_URL`
-- `NATS_STREAM`
-- `NATS_SUBJECT_PREFIX`
-- `NATS_STREAM_MAX_AGE_SECONDS`
-- `NATS_DUPLICATE_WINDOW_SECONDS`
+## ClickHouse
 
-These settings control the durable buffer between ingress and raw storage.
+- `CLICKHOUSE_ADMIN_USER`, `CLICKHOUSE_ADMIN_PASSWORD`
+- `CLICKHOUSE_VECTOR_PASSWORD` — the insert-only user `rawbbit_vector`
+- `CLICKHOUSE_MCP_USER`, `CLICKHOUSE_MCP_PASSWORD` — read-only, `analytics.*`
+- `CLICKHOUSE_METABASE_USER`, `CLICKHOUSE_METABASE_PASSWORD` — read-only,
+  `analytics.*` and every dataset
+- `CLICKHOUSE_CONFIG_PROFILE_FILE`, `CLICKHOUSE_USERS_PROFILE_FILE` — memory
+  profiles in `quickstart/swarm/clickhouse/` (`low-memory`, `production-small`
+  for 8 vCPU / 32 GB, `production-medium` for 8 vCPU / 64 GB)
 
-## Collector API settings
+## Backups
 
-Main variables:
+- `BACKUP_AT` — daily UTC time, `HH:MM`
+- `BACKUP_KEEP_LOCAL` — local copies kept per database
+- `BACKUP_S3_URL`, `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY` — optional
+  off-site copy
 
-- `PORT`
-- `UVICORN_WORKERS`: accepted for compatibility and ignored; the Go collector serves all cores from one process
-- `FORWARDED_ALLOW_IPS` (default `127.0.0.1`): peers whose `X-Forwarded-For`/`X-Forwarded-Proto` headers are trusted
-- `NATS_MAX_INFLIGHT_PUBLISHES` (default `512`)
-- `COLLECTOR_API_KEYS_JSON`
-- `MAX_EVENTS_PER_REQUEST`
-- `MAX_REQUEST_BYTES`
-- `IP_HASH_SALT`
-- `STORE_RAW_IP`
-- `GEOIP_ENABLED`
-- `GEOIP_MMDB_PATH`
-- `CORS_ALLOW_ORIGINS`
-- `CORS_ALLOW_METHODS`
-- `CORS_ALLOW_HEADERS`
-- `CORS_ALLOW_CREDENTIALS`
-- `CORS_MAX_AGE_SECONDS`
+## MCP server
 
-Notes:
+- `MCP_PATH`, `MCP_MAX_QUERY_ROWS`, `MCP_MAX_SAMPLE_ROWS`,
+  `MCP_MAX_EXECUTION_SECONDS`, `MCP_BOT_USER_AGENT_REGEX`
+- authentication: `MCP_API_KEYS_JSON` (static bearer tokens) or the
+  `MCP_JWT_*` settings; `MCP_ALLOW_UNAUTHENTICATED=1` only for private
+  networks
 
-- `COLLECTOR_API_KEYS_JSON` is a JSON map of `{ "api_key": "app_id" }`
-- the collector publishes a batch's events concurrently, up to `NATS_MAX_INFLIGHT_PUBLISHES` per process; if any event fails, the whole request returns `503` and is safe to retry, because JetStream deduplicates on `Nats-Msg-Id` (`<app_id>:<event_id>`) within `NATS_DUPLICATE_WINDOW_SECONDS`
-- event order within a batch is not preserved in the stream
-- browser ingestion requires correct HTTPS and CORS configuration
-- API keys, salts, and credentials should come from private environment or secret management, not committed files
-- if GeoIP enrichment uses DB-IP data and your web application displays or uses those geolocation results, include the required attribution link in the UI: `<a href='https://db-ip.com'>IP Geolocation by DB-IP</a>`
-  - download IP database, double check license requirements and attribution before using - https://db-ip.com/db/download/ip-to-country-lite 
+See [`mcp-server/README.md`](../mcp-server/README.md).
 
-## Raw-writer settings
+## Postgres and Metabase
 
-Main variables:
-
-- `NATS_CONSUMER`
-- `NATS_FETCH_BATCH`
-- `NATS_FETCH_TIMEOUT_SECONDS`
-- `NATS_ACK_WAIT_SECONDS`
-- `NATS_MAX_DELIVER`
-- `NATS_MAX_ACK_PENDING` (default `10000`)
-- `RAW_FLUSH_INTERVAL_SECONDS`
-- `RAW_MAX_EVENTS_PER_FILE`
-- `RAW_MAX_BYTES_PER_FILE`
-- `RAW_MAX_BUFFERED_EVENTS` (optional)
-
-These settings control how aggressively queued events are batched and flushed into Parquet.
-
-Notes:
-
-- `RAW_FLUSH_INTERVAL_SECONDS` must be lower than `NATS_ACK_WAIT_SECONDS`; raw-writer refuses to start otherwise
-- raw-writer flushes early when its buffer across all partitions reaches 80% of the consumer's `max_ack_pending`, largest partitions first, so many apps or hour boundaries can't stall delivery; `RAW_MAX_BUFFERED_EVENTS` can only lower that threshold
-- `NATS_MAX_ACK_PENDING` applies only when raw-writer creates the durable consumer; an existing consumer keeps its configuration
-- on SIGTERM, raw-writer flushes and ACKs its buffer before exiting; give the container a stop grace period (the VM-one quickstart uses 30 seconds)
-
-## Object-storage settings
-
-Main variables:
-
-- `RAW_STORAGE_BACKEND` (`gcs` or `s3`)
-
-GCS mode:
-
-- `GCS_RAW_BUCKET`
-- `GCS_RAW_PREFIX`
-- `GOOGLE_APPLICATION_CREDENTIALS`
-
-S3-compatible mode:
-
-- `S3_ENDPOINT_URL`
-- `S3_BUCKET`
-- `S3_PREFIX`
-- `S3_ACCESS_KEY`
-- `S3_SECRET_KEY`
-- `S3_REGION`
-- `S3_FORCE_PATH_STYLE`
-- `S3_USE_SSL`
-- `S3_VERIFY_SSL`
-
-Notes:
-
-- `RAW_STORAGE_BACKEND` selects the raw landing target
-- `RAW_STORAGE_BACKEND=s3` is the preferred OSS path when using SeaweedFS or another S3-compatible object store
-- `GCS_RAW_BUCKET` is required when `RAW_STORAGE_BACKEND=gcs`
-- `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY`, and `S3_SECRET_KEY` are required when `RAW_STORAGE_BACKEND=s3`
-- `GCS_RAW_PREFIX` and `S3_PREFIX` default to `raw`
-- in GCS deployments, `GOOGLE_APPLICATION_CREDENTIALS` usually points to the mounted service-account JSON inside the container
-- `S3_FORCE_PATH_STYLE=1` is the practical default for many S3-compatible systems, including [SeaweedFS](https://github.com/seaweedfs/seaweedfs)
-
-## Raw partition layout
-
-Expected object layout:
-
-```text
-<RAW_PREFIX>/app_id=<app_id>/event_date=YYYY-MM-DD/hour=HH/
-```
-
-- `event_date` and `hour` are derived from `event_timestamp` when valid
-- otherwise they fall back to collector receive time
-- `RAW_PREFIX` means `GCS_RAW_PREFIX` in GCS mode or `S3_PREFIX` in S3-compatible mode
-
-## Raw Parquet columns
-
-Current raw output includes:
-
-- `event_id`, `app_id`, `environment`, `event_name`, `event_timestamp`, `received_at`
-- `user_id`, `user_pseudo_id`, `session_id`
-- `platform`, `app_version`, `os_version`, `device_model`, `locale`, `timezone`
-- `event_params_json`, `user_properties_json`, `traffic_source_json`, `geo_json`, `consent_json`
-- `ingest_request_id`, `ingest_user_agent`, `ingest_ip_hash`
-- `nats_stream`, `nats_sequence`
-
-The raw layer stays intentionally simple and mostly string-typed for compatibility and portability.
-
-## ClickHouse dbt ingestion settings
-
-The VM-two quickstart has a separate `.env.example` for its ClickHouse and ingestion-runner
-runtime. The main dbt settings are:
-
-- `RAWBBIT_RAW_LOAD_MODE` (`dbt` or `legacy`)
-- `DBT_RUNNER_IMAGE`
-- `DBT_RUNNER_UID`
-- `DBT_RUNNER_GID`
-- `DBT_THREADS` (accepted and ignored by the Go runner, which runs statements sequentially)
-- `DBT_CLICKHOUSE_MAX_THREADS`
-- `RAWBBIT_DBT_HOURLY_LOOKBACK_HOURS`
-- `RAWBBIT_DBT_DAILY_LOOKBACK_DAYS`
-- `RAWBBIT_DBT_BACKFILL_CHUNK_HOURS`
-- `CLICKHOUSE_DBT_USER`
-- `CLICKHOUSE_DBT_PASSWORD`
-- `CLICKHOUSE_RAW_S3_URL`
-- `CLICKHOUSE_RAW_S3_ACCESS_KEY`
-- `CLICKHOUSE_RAW_S3_SECRET_KEY`
-
-`RAWBBIT_RAW_LOAD_MODE` selects the sole owner of `analytics.events` raw
-ingestion. In `dbt` mode, scheduled dbt jobs load bounded Parquet windows and
-run their data tests. In `legacy` mode, scheduled dbt jobs skip and the host
-shell loader can run instead. Both paths use the same pipeline lock.
-
-The public dbt-runner image runs as UID/GID `1000:1000`. If the host deployment
-user differs, build a local image with matching IDs so the container can write
-its bind-mounted logs, artifacts, and lock file.
-
-S3 credentials remain in ClickHouse's `rawbbit_raw_s3` named collection. The
-dbt container receives only its ClickHouse service-user credentials, and the
-named-collection values are non-overridable so storage secrets do not appear
-in compiled dbt SQL or artifacts.
-
-See [`../dbt_project/README.md`](../dbt_project/README.md) and the
-[`VM-two quickstart`](../quickstart/vm_rawbbit_two/README.md).
-
-## Downstream Rawbbit MCP server and Metabase settings
-
-The ingestion runtime uses `quickstart/vm_rawbbit_one/.env.example` as its canonical configuration reference.
-
-The optional Rawbbit MCP server and combined Metabase deployment has its own environment file under `mcp-server/.env.example` in the public repository.
-
-Main MCP settings:
-
-- `MCP_DOMAIN`
-- `MCP_PATH`
-- `MCP_BIND_HOST_PORT`
-- `MCP_MAX_QUERY_ROWS`
-- `MCP_MAX_SAMPLE_ROWS`
-- `MCP_MAX_EXECUTION_SECONDS`
-- `MCP_API_KEYS_JSON`
-- `MCP_JWT_PUBLIC_KEY`
-- `MCP_JWT_JWKS_URI`
-- `MCP_JWT_ISSUER`
-- `MCP_JWT_AUDIENCE`
-
-Main ClickHouse connection settings:
-
-- `CLICKHOUSE_HOST`
-- `CLICKHOUSE_PORT`
-- `CLICKHOUSE_USER`
-- `CLICKHOUSE_PASSWORD`
-- `CLICKHOUSE_DATABASE`
-- `CLICKHOUSE_TABLE`
-- `CLICKHOUSE_SECURE`
-- `CLICKHOUSE_VERIFY`
-
-Main Metabase settings:
-
-- `METABASE_DOMAIN`
-- `METABASE_BIND_HOST_PORT`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
-- `POSTGRES_PASSWORD`
+- `POSTGRES_SUPERUSER`, `POSTGRES_SUPERUSER_PASSWORD`
+- `METABASE_DB_NAME`, `METABASE_DB_USER`, `METABASE_DB_PASSWORD`
 - `METABASE_TIMEZONE`
 
-Notes:
+## Stack
 
-- `MCP_API_KEYS_JSON` is a JSON map of `{ "label": "bearer_token" }`
-- real bearer tokens, ClickHouse passwords, and PostgreSQL passwords must stay out of git
-- client configs such as `opencode.jsonc` and `openclaw.json` should use placeholders, environment variables, or private local secret files rather than committed tokens
-- ClickHouse should be reachable from the MCP container, but ClickHouse ports should not be casually exposed to the public internet
-- Metabase uses PostgreSQL for application data in the combined deployment
-
-For the deployment walkthrough, see [`../mcp-server/README.md`](../mcp-server/README.md).
+- `RAWBBIT_STACK_NAME` — `docker stack deploy` name (default `rawbbit`)
+- `RAWBBIT_DATA_ROOT` — host directory of all persistent state on the data
+  node (default `/srv/rawbbit`)
+- `LOG_LEVEL` — MCP server log level; `VECTOR_LOG` sets Vector's

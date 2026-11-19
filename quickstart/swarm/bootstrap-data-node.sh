@@ -2,18 +2,17 @@
 # Create the persistent host directories on the Swarm data node (the manager
 # labeled rawbbit.data=true). Run once with sudo on that node.
 #
-# Collector replicas need GEOIP_HOST_DIR on every node that can run them; run
+# Vector replicas need GEOIP_HOST_DIR on every node that can run them; run
 #   sudo ./bootstrap-data-node.sh --geoip-only
 # on the other nodes (or create the directory yourself).
 set -euo pipefail
 
 ROOT_DIR="${RAWBBIT_DATA_ROOT:-/srv/rawbbit}"
 GEOIP_DIR="${GEOIP_HOST_DIR:-/srv/rawbbit-geoip}"
-# The ingestion runner image and SeaweedFS (user "seaweed") run as uid 1000.
-DBT_UID="${DBT_RUNNER_UID:-1000}"
-DBT_GID="${DBT_RUNNER_GID:-1000}"
-SEAWEED_UID="${SEAWEED_UID:-1000}"
-SEAWEED_GID="${SEAWEED_GID:-1000}"
+# The ClickHouse image runs as uid/gid 101; backup files are written by the
+# server and pruned by the backup service as root.
+CLICKHOUSE_UID="${CLICKHOUSE_UID:-101}"
+CLICKHOUSE_GID="${CLICKHOUSE_GID:-101}"
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "This script creates host directories under ${ROOT_DIR}; run it with sudo." >&2
@@ -30,7 +29,6 @@ fi
 for dir in \
   "${ROOT_DIR}/caddy/data" \
   "${ROOT_DIR}/caddy/config" \
-  "${ROOT_DIR}/nats/jetstream" \
   "${ROOT_DIR}/clickhouse/data" \
   "${ROOT_DIR}/clickhouse/logs" \
   "${ROOT_DIR}/postgres"; do
@@ -38,15 +36,8 @@ for dir in \
   echo "created_or_verified ${dir}"
 done
 
-for dir in "${ROOT_DIR}/seaweedfs"; do
-  install -d -m 0755 -o "${SEAWEED_UID}" -g "${SEAWEED_GID}" "${dir}"
-  echo "created_or_verified ${dir} owner=${SEAWEED_UID}:${SEAWEED_GID}"
-done
-
-for dir in "${ROOT_DIR}/dbt" "${ROOT_DIR}/dbt/logs" "${ROOT_DIR}/dbt/target"; do
-  install -d -m 0755 -o "${DBT_UID}" -g "${DBT_GID}" "${dir}"
-  echo "created_or_verified ${dir} owner=${DBT_UID}:${DBT_GID}"
-done
+install -d -m 0750 -o "${CLICKHOUSE_UID}" -g "${CLICKHOUSE_GID}" "${ROOT_DIR}/clickhouse/backups"
+echo "created_or_verified ${ROOT_DIR}/clickhouse/backups owner=${CLICKHOUSE_UID}:${CLICKHOUSE_GID}"
 
 echo
 echo "Next, on a manager: docker node update --label-add rawbbit.data=true $(hostname)"

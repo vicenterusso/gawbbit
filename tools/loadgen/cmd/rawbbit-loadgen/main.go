@@ -89,7 +89,7 @@ func applyEnv(fs *flag.FlagSet) error {
 
 type sendFlags struct {
 	collector, host, apiKey, appID, environment, runID, manifest string
-	events, batch, concurrency, players, maxEvents, retries      int
+	events, batch, concurrency, players, maxBytes, retries       int
 	rate, duplicates                                             float64
 	negative, insecure                                           bool
 	timeout                                                      time.Duration
@@ -108,7 +108,7 @@ func (s *sendFlags) register(fs *flag.FlagSet) {
 	fs.IntVar(&s.batch, "batch", 50, "events per request")
 	fs.IntVar(&s.concurrency, "concurrency", 4, "parallel requests")
 	fs.IntVar(&s.players, "players", 50, "synthetic players (user_pseudo_id)")
-	fs.IntVar(&s.maxEvents, "max-events-per-request", 500, "collector MAX_EVENTS_PER_REQUEST, for the 413 check (0 skips it)")
+	fs.IntVar(&s.maxBytes, "max-request-bytes", 1048576, "collector MAX_REQUEST_BYTES, for the 413 check (0 skips it)")
 	fs.IntVar(&s.retries, "retries", 5, "retries per batch on 5xx or network errors")
 	fs.Float64Var(&s.rate, "rate", 200, "events per second (0 = as fast as possible)")
 	fs.Float64Var(&s.duplicates, "duplicates", 0.05, "fraction of batches sent twice (deduplication check)")
@@ -136,7 +136,7 @@ func (v *verifyFlags) register(fs *flag.FlagSet, withManifest bool) {
 	fs.StringVar(&v.chPassword, "clickhouse-password", "", "ClickHouse password")
 	fs.StringVar(&v.chHost, "clickhouse-host", "", "Host header for ClickHouse")
 	fs.StringVar(&v.table, "table", "analytics.events", "events table")
-	fs.StringVar(&v.loadCmd, "load-cmd", "", "shell command run before each check, e.g. a runner backfill; "+
+	fs.StringVar(&v.loadCmd, "load-cmd", "", "shell command run before each check (for example to force a load step); "+
 		"$LOADGEN_WINDOW_START and $LOADGEN_WINDOW_END hold the window")
 	fs.DurationVar(&v.timeout, "verify-timeout", 10*time.Minute, "give up after this long")
 	fs.DurationVar(&v.interval, "verify-interval", 20*time.Second, "time between checks")
@@ -196,14 +196,18 @@ func doSend(ctx context.Context, s sendFlags) (loadgen.Manifest, error) {
 
 	var failures []string
 	if s.negative {
-		cases := loadgen.RunNegative(ctx, client, s.apiKey, s.runID, s.appID, s.environment, s.maxEvents)
+		cases := loadgen.RunNegative(ctx, client, s.apiKey, s.runID, s.appID, s.environment, s.maxBytes)
 		for _, c := range cases {
 			status := "ok"
 			if !c.OK() {
 				status = "FAILED"
 				failures = append(failures, fmt.Sprintf("%s: want %d, got %d %s", c.Name, c.WantStatus, c.Got, c.Err))
 			}
-			fmt.Printf("loadgen_negative %-28q want=%d got=%d %s\n", c.Name, c.WantStatus, c.Got, status)
+			kind := "rejected"
+			if c.Dropped {
+				kind = "dropped"
+			}
+			fmt.Printf("loadgen_negative %-28q kind=%s want=%d got=%d %s\n", c.Name, kind, c.WantStatus, c.Got, status)
 		}
 	}
 

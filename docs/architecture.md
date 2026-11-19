@@ -1,147 +1,106 @@
 # Architecture
 
-## Overview
-
-Rawbbit is a self-hosted telemetry pipeline for mobile and web game events.
-It is designed for teams that want to collect player sessions, gameplay events, funnels, retention signals, economy events, monetization events, and backend service events without handing the raw telemetry layer to a proprietary analytics vendor.
-
-The architecture stays intentionally small: game clients and services send events, Rawbbit lands the durable raw layer, ClickHouse serves analytics, and optional tools such as MCP and Metabase sit on top.
-
-Main Rawbbit path:
+Rawbbit is a self-hosted event pipeline for games. Game clients, web builds,
+mobile apps and backend services send batched events over HTTP; ClickHouse
+stores them; MCP clients, Metabase and SQL read them.
 
 ```text
-Producer -> Collector API -> NATS JetStream -> Raw Writer
-  -> S3-compatible object storage / SeaweedFS Parquet
-  -> scheduled dbt ingestion
-  -> ClickHouse analytics.events
-  -> MCP / Metabase / agents / users
+game SDK -> Caddy -> Vector -> ClickHouse analytics.events -> MCP / Metabase / agents / users
+                         \-> dataset_<id>.events (optional, per app_id)
 ```
 
-Optional BigQuery path:
-
-```text
-Producer -> Collector API -> NATS JetStream -> Raw Writer
-  -> object storage Parquet
-  -> BigQuery external table
-  -> SQLMesh base model
-```
+Everything runs as one Docker Swarm stack:
+[`quickstart/swarm`](../quickstart/swarm/README.md).
 
 ## Components
 
-### Collector API
+### Caddy
 
-The collector is the request-facing ingress service for game clients, web builds, mobile apps, and backend game services.
+The public edge. For the collector hostname it:
 
-It is responsible for:
+- terminates TLS (automatic certificates);
+- answers CORS preflights for the origins in `CORS_ALLOW_ORIGINS` and adds
+  the CORS headers to responses;
+- rejects bodies over `MAX_REQUEST_BYTES` with `413`, which makes the SDKs
+  split the batch;
+- passes the client address in `X-Forwarded-For`, replacing whatever the
+  client sent;
+- forwards `GET /healthz` to Vector's health endpoint.
 
-- accepting batched player and gameplay events over HTTP
-- validating payloads
-- mapping API keys to `app_id`
-- attaching ingest metadata such as request ID and receive time
-- publishing one message per event into JetStream
+It also proxies the MCP and Metabase hostnames.
 
-### NATS JetStream
+### Vector
 
-[NATS JetStream](https://nats.io/) provides the durable buffer between request handling and raw storage.
+[Vector](https://vector.dev/) replaces the collector service. Its
+configuration is [`quickstart/swarm/vector/vector.yaml`](../quickstart/swarm/vector/vector.yaml):
 
-It is responsible for:
+1. **Authenticate.** The `X-API-Key` must be a key of
+   `COLLECTOR_API_KEYS_JSON`; otherwise `401`. The key's single allowed
+   `app_id` travels with the request.
+2. **Split.** `{"events": [...]}` becomes one Vector event per entry. The
+   receive time, a request id, the `User-Agent` and the client address are
+   copied to each.
+3. **Validate and normalise.** Each event needs `event_id`, `app_id` (the
+   key's app) and `event_name`, and an `event_timestamp` Vector can parse.
+   Valid events become one `analytics.events` row: nested `user` and `device`
+   fields become columns, `event_params`, `user_properties`, `traffic_source`,
+   `consent` and `geo` become JSON strings, and the client address becomes
+   `ingest_ip_hash = sha256(IP_HASH_SALT + ":" + ip)`. The raw address is not
+   stored. An invalid event is dropped and logged with the reason; the other
+   events of the batch are kept.
+4. **GeoIP** (optional). Adds `country` and `country_code` from a
+   MaxMind-format database to `geo_json`.
+5. **Route.** An `app_id` listed in a dataset goes to `dataset_<id>.events`,
+   everything else to `analytics.events`.
+6. **Insert.** Rows are inserted in batches (up to 20 000 rows or one
+   second) with `JSONEachRow`.
 
-- buffering accepted events
-- decoupling API response time from storage-write timing
-- supporting durable consumer semantics between the collector and raw writer
+End-to-end acknowledgements are on: the HTTP response waits until ClickHouse
+confirmed the insert of the request's events. A `200` therefore means the
+events are stored. While ClickHouse is unreachable Vector retries and the
+request stays open; the SDK times out, keeps the events in its durable queue
+and sends them again. Vector itself holds no state, so its replicas can run
+on any node.
 
-### Raw Writer
+### ClickHouse
 
-The raw writer consumes queued events and lands them as partitioned Parquet files.
+The source of truth. [`schema.sql`](../quickstart/swarm/clickhouse/schema.sql)
+defines `analytics.events` as a `ReplacingMergeTree(received_time)` ordered
+by `(app_id, event_id)` and partitioned by month. A retried event (an SDK
+resend after a timeout, a Vector retry) has the same key and collapses into
+one row, the latest, when ClickHouse merges parts. Queries that must be exact
+before a merge use `FINAL`.
 
-It is responsible for:
+The `clickhouse-setup` job creates the table, the service users (`rawbbit_vector`
+can only insert; the MCP and Metabase users can only read) and the datasets.
+The `clickhouse-backup` service runs a daily native `BACKUP` to the data node
+and optionally to S3.
 
-- consuming queued events
-- buffering micro-batches
-- assigning partitions
-- writing Snappy Parquet
-- uploading objects to storage
-- acknowledging messages only after durable landing
+### Datasets
 
-### Raw object-storage layer
+A dataset gives chosen `app_id`s their own database `dataset_<id>`, table and
+read-only ClickHouse user, and the MCP server serves it at
+`/datasets/<id>/mcp` for its own bearer tokens. Datasets provide logical
+access separation, not resource isolation: they share the ClickHouse server.
 
-The raw Parquet layer is the system-of-record boundary for the current release.
+### MCP server and Metabase
 
-This layer:
-
-- preserves accepted player and game-service events in a portable format
-- separates ingestion concerns from downstream query and modeling concerns
-- makes it possible to change downstream tooling without changing the ingestion contract
-
-### dbt ingestion and ClickHouse serving layer
-
-ClickHouse is the main analytical database and serving layer over raw Parquet.
-
-ClickHouse is not the ingestion source of truth. The durable boundary remains
-raw Parquet. A persistent Go ingestion runner (`dbt_project/`, which replaced dbt Core
-while keeping its SQL) loads bounded Parquet windows into the local
-`analytics.events` `MergeTree` table and runs ingestion data tests. It
-contains one ingestion model; staging and mart models
-can be added later when their grains and consumers are defined.
-
-The runner processes a short overlapping window hourly and reconciles a longer
-window daily for late files. Manual backfills use explicit, hour-aligned UTC
-ranges and smaller chunks. All dbt jobs and the legacy shell loader share one
-lock, while `RAWBBIT_RAW_LOAD_MODE` gives exactly one path ownership of raw
-ingestion.
-
-Within each selected window, the runner keeps one winner per
-`(app_id, event_id)` and uses the same delete-then-insert incremental strategy
-as dbt-clickhouse's `delete_insert` to replace matching keys. This makes overlapping schedules and replayed windows safe at
-the event-key level. The legacy hourly shell loader remains available as a
-mutually exclusive rollback path.
-
-See [`../clickhouse/README.md`](../clickhouse/README.md).
-See [`../dbt_project/README.md`](../dbt_project/README.md).
-
-### Rawbbit MCP server and Metabase layer
-
-The Rawbbit MCP server can be deployed after ClickHouse is populated with Rawbbit events. It exposes read-only tools for event discovery, JSON-key discovery, sampling, guarded SQL, DAU, and funnel checks.
-
-Metabase can be deployed beside the MCP server as a BI interface over the same ClickHouse data for player and gameplay analysis.
-
-MCP clients can include AI coding or operations agents such as OpenCode, OpenClaw, or any other client that supports remote HTTP MCP.
-
-This layer is not part of ingestion. It is a downstream access layer:
-
-```text
-SeaweedFS/S3 Parquet -> dbt ingestion -> ClickHouse -> MCP clients / AI agents / Metabase
-```
-
-See [`../mcp-server/README.md`](../mcp-server/README.md).
-
-### Optional BigQuery and SQLMesh layer
-
-The repository also includes a BigQuery external-table path and a small [SQLMesh](https://sqlmesh.readthedocs.io/en/stable/) project.
-
-This path reads the same raw Parquet contract through BigQuery and can build the starter `staging.base_dataquery__events` model. It is useful when a deployment wants BigQuery, but it is not the center of the OSS Rawbbit architecture.
+The [Rawbbit MCP server](../mcp-server/README.md) exposes read-only tools for
+event discovery, JSON-key discovery, sampling, guarded SQL, DAU and funnel
+checks to MCP clients and AI agents. Metabase is a BI interface over the same
+ClickHouse data. Neither is part of ingestion.
 
 ## Design choices
 
-### Raw-first storage boundary
-
-Raw Parquet is the durable truth boundary. That keeps the ingestion system simple and avoids coupling game telemetry collection to any single warehouse-specific serving model.
-
-### Queue-separated ingestion
-
-The collector and raw writer are intentionally separated by a durable message layer. This lets the player-facing ingress edge stay narrow while the storage side handles batching and retries independently.
-
-### ClickHouse-first serving with optional warehouses
-
-The current repository uses ClickHouse as the main open analytical database path, with MCP, Metabase, agents, and SQL users consuming the ClickHouse-backed table. BigQuery external tables and SQLMesh remain optional downstream integrations over the same raw Parquet contract.
-
-## Delivery semantics
-
-The pipeline should be understood as at-least-once.
-
-That means:
-
-- duplicate events are possible
-- the collector reduces duplicate inserts within the JetStream dedupe window using `(app_id, event_id)`
-- the ClickHouse dbt ingestion model uses `(app_id, event_id)` as its replacement key
-- downstream consumers should treat the pair, rather than `event_id` alone, as the stable event identity
+- **ClickHouse as the source of truth.** Rawbbit kept a Parquet raw layer on
+  object storage so the analytics database could change (ClickHouse or
+  BigQuery) without touching ingestion. This deployment only uses ClickHouse,
+  so the raw layer, NATS JetStream, the raw-writer, SeaweedFS and the hourly
+  loader were removed. Durability comes from ClickHouse plus daily backups.
+- **Off-the-shelf intake.** Validation and batching are Vector configuration,
+  not service code to maintain. The trade-off is that Vector cannot return a
+  per-request validation report: invalid events are dropped and logged
+  instead of failing the request with `422`.
+- **Deduplication in the table.** `ReplacingMergeTree` on `(app_id, event_id)`
+  replaces the NATS duplicate window and the loader's per-window
+  deduplication.

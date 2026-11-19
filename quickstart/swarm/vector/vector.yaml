@@ -1,0 +1,254 @@
+# Rawbbit event intake: Caddy -> Vector -> ClickHouse.
+#
+# The game SDKs POST {"events": [...]} to /v1/events:batch with an X-API-Key
+# header. Vector checks the key, splits the batch, validates and normalises
+# every event into one analytics.events row, and inserts rows in batches.
+# End-to-end acknowledgements are on: a request is answered 200 only after
+# ClickHouse has stored all of its valid events. While ClickHouse is down the
+# request stays open (Vector keeps retrying) and the SDK times out and resends;
+# resent events collapse into one row (see clickhouse/schema.sql).
+#
+# Vector 0.57+ does not interpolate ${VAR} in config files, so this file is
+# static: the VRL programs read COLLECTOR_API_KEYS_JSON, IP_HASH_SALT and
+# RAWBBIT_APP_DATASETS with get_env_var(), and the ClickHouse password is the
+# Swarm secret /run/secrets/clickhouse_vector_password. The GeoIP lookup lives
+# in geoip-<0|1>.yaml, picked by GEOIP_ENABLED.
+
+data_dir: /var/lib/vector
+
+secret:
+  run:
+    type: directory
+    path: /run/secrets
+
+api:
+  enabled: true
+  address: 0.0.0.0:8686
+
+acknowledgements:
+  enabled: true
+
+sources:
+  intake:
+    type: http_server
+    address: 0.0.0.0:8080
+    path: /v1/events:batch
+    strict_path: true
+    method: POST
+    decoding:
+      codec: json
+    headers:
+      - User-Agent
+      - X-Forwarded-For
+    auth:
+      strategy: custom
+      # COLLECTOR_API_KEYS_JSON maps each API key to the one app_id it may
+      # send. The allowed app_id travels with the events of the request.
+      source: |-
+        keys = object(parse_json(get_env_var("COLLECTOR_API_KEYS_JSON") ?? "{}") ?? {}) ?? {}
+        key = string(.headers."x-api-key") ?? ""
+        app = get(keys, [key]) ?? null
+        if !is_string(app) || key == "" {
+          false
+        } else {
+          %rawbbit_allowed_app_id = app
+          true
+        }
+
+  vector_metrics:
+    type: internal_metrics
+
+transforms:
+  # One request becomes one Vector event per entry of "events". Request-level
+  # facts (receive time, request id, user agent, client IP) are copied to each.
+  split:
+    type: remap
+    inputs: [intake]
+    source: |-
+      events = .events
+      if !is_array(events) {
+        . = {"_drop": "events must be a list"}
+        return .
+      }
+      request = {
+        "allowed_app_id": .rawbbit_allowed_app_id,
+        "received_time": format_timestamp!(now(), "%Y-%m-%d %H:%M:%S%.3f", timezone: "UTC"),
+        "request_id": uuid_v4(),
+        "user_agent": ."User-Agent",
+        "client_ip": strip_whitespace(string(split(string(."X-Forwarded-For") ?? "", ",")[0]) ?? "")
+      }
+      . = map_values(array!(events)) -> |event| {
+        { "event": event, "request": request }
+      }
+
+  # Validate one event and build its analytics.events row. An invalid event
+  # becomes {"_drop": reason, ...}: it is logged, not inserted, and the rest
+  # of the batch is kept.
+  normalize:
+    type: remap
+    inputs: [split]
+    source: |-
+      if exists(._drop) { return . }
+      ev = .event
+      req = .request
+      if !is_object(ev) {
+        . = {"_drop": "event must be an object"}
+        return .
+      }
+      event_id = string(ev.event_id) ?? ""
+      app_id = string(ev.app_id) ?? ""
+      event_name = string(ev.event_name) ?? ""
+      drop = {"app_id": ev.app_id, "event_id": ev.event_id, "event_name": ev.event_name}
+      if event_id == "" { drop._drop = "event_id is required"; . = drop; return . }
+      if app_id == "" { drop._drop = "app_id is required"; . = drop; return . }
+      if event_name == "" { drop._drop = "event_name is required"; . = drop; return . }
+      if app_id != req.allowed_app_id {
+        drop._drop = "api key is not allowed for this app_id"; . = drop; return .
+      }
+
+      raw_ts = ev.event_timestamp
+      ts = null
+      if is_string(raw_ts) {
+        s = string!(raw_ts)
+        ts = parse_timestamp(s, "%+") ??
+          parse_timestamp(s, "%Y-%m-%dT%H:%M:%S%.f") ??
+          parse_timestamp(s, "%Y-%m-%d %H:%M:%S%.f") ??
+          parse_timestamp(s, "%Y-%m-%dT%H:%M:%S") ??
+          parse_timestamp(s, "%Y-%m-%d %H:%M:%S") ??
+          null
+      } else if is_integer(raw_ts) || is_float(raw_ts) {
+        # Seconds since the epoch, or milliseconds when the value is that big.
+        n = to_float!(raw_ts)
+        if n > 100000000000.0 { n = n / 1000.0 }
+        ts = from_unix_timestamp(to_int(n * 1000.0), unit: "milliseconds") ?? null
+      }
+      if !is_timestamp(ts) {
+        drop._drop = "event_timestamp is not a valid timestamp"; . = drop; return .
+      }
+      t = timestamp!(ts)
+      year = to_int(format_timestamp!(t, "%Y", timezone: "UTC")) ?? 0
+      if year < 1970 || year > 2105 {
+        drop._drop = "event_timestamp is out of range"; . = drop; return .
+      }
+
+      user = object(ev.user) ?? {}
+      device = object(ev.device) ?? {}
+      row = {
+        "event_id": event_id,
+        "app_id": app_id,
+        "environment": string(ev.environment) ?? "",
+        "event_name": event_name,
+        "event_time": format_timestamp!(t, "%Y-%m-%d %H:%M:%S%.3f", timezone: "UTC"),
+        "event_date": format_timestamp!(t, "%Y-%m-%d", timezone: "UTC"),
+        "received_time": req.received_time,
+        "user_id": string(user.user_id) ?? null,
+        "user_pseudo_id": string(user.user_pseudo_id) ?? "",
+        "session_id": string(user.session_id) ?? null,
+        "platform": string(device.platform) ?? null,
+        "app_version": string(device.app_version) ?? null,
+        "os_version": string(device.os_version) ?? null,
+        "device_model": string(device.device_model) ?? null,
+        "locale": string(device.locale) ?? null,
+        "timezone": string(device.timezone) ?? null,
+        "event_params_json": null,
+        "user_properties_json": null,
+        "traffic_source_json": null,
+        "consent_json": null,
+        "geo": object(ev.geo) ?? {},
+        "ingest_request_id": req.request_id,
+        "ingest_user_agent": string(req.user_agent) ?? null,
+        "ingest_ip_hash": null,
+        "client_ip": req.client_ip
+      }
+      if is_object(ev.event_params) { row.event_params_json = encode_json(ev.event_params) }
+      if is_object(ev.user_properties) { row.user_properties_json = encode_json(ev.user_properties) }
+      if is_object(ev.traffic_source) { row.traffic_source_json = encode_json(ev.traffic_source) }
+      if is_object(ev.consent) { row.consent_json = encode_json(ev.consent) }
+      if row.client_ip != "" {
+        row.ingest_ip_hash = sha2((get_env_var("IP_HASH_SALT") ?? "") + ":" + string!(row.client_ip), variant: "SHA-256")
+      }
+      dataset = get(object(parse_json(get_env_var("RAWBBIT_APP_DATASETS") ?? "{}") ?? {}) ?? {}, [app_id]) ?? null
+      if is_string(dataset) {
+        row._dataset = dataset
+      }
+      . = row
+
+  # Picks the destination: the dropped-event log, dataset_<id>.events for an
+  # app_id routed to a dataset by RAWBBIT_APP_DATASETS, or analytics.events.
+  route:
+    type: route
+    inputs: [geoip]
+    route:
+      dropped: exists(._drop)
+      dataset: exists(._dataset) && !exists(._drop)
+    reroute_unmatched: true
+
+  dropped:
+    type: remap
+    inputs: [route.dropped]
+    source: |-
+      . = {
+        "message": "event_dropped",
+        "reason": ._drop,
+        "app_id": .app_id,
+        "event_id": .event_id,
+        "event_name": .event_name
+      }
+
+sinks:
+  clickhouse:
+    type: clickhouse
+    inputs: [route._unmatched]
+    endpoint: http://clickhouse:8123
+    database: analytics
+    table: events
+    format: json_each_row
+    skip_unknown_fields: true
+    compression: gzip
+    auth:
+      strategy: basic
+      user: rawbbit_vector
+      password: "SECRET[run.clickhouse_vector_password]"
+    batch:
+      max_events: 20000
+      timeout_secs: 1
+    buffer:
+      type: memory
+      max_events: 50000
+      when_full: block
+
+  clickhouse_datasets:
+    type: clickhouse
+    inputs: [route.dataset]
+    endpoint: http://clickhouse:8123
+    database: "dataset_{{ _dataset }}"
+    table: events
+    format: json_each_row
+    skip_unknown_fields: true
+    compression: gzip
+    auth:
+      strategy: basic
+      user: rawbbit_vector
+      password: "SECRET[run.clickhouse_vector_password]"
+    batch:
+      max_events: 20000
+      timeout_secs: 1
+    buffer:
+      type: memory
+      max_events: 50000
+      when_full: block
+
+  dropped_log:
+    type: console
+    inputs: [dropped]
+    encoding:
+      codec: json
+    acknowledgements:
+      enabled: false
+
+  metrics:
+    type: prometheus_exporter
+    inputs: [vector_metrics]
+    address: 0.0.0.0:9598
+    acknowledgements:
+      enabled: false

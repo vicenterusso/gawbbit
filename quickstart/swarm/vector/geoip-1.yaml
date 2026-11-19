@@ -1,0 +1,28 @@
+# GEOIP_ENABLED=1: add country and country_code from the MaxMind-format
+# database at GEOIP_HOST_DIR/dbip-country-lite.mmdb (for example DB-IP Country Lite) to the geo
+# context the game sent.
+enrichment_tables:
+  geoip_db:
+    type: mmdb
+    path: /var/lib/geoip/dbip-country-lite.mmdb
+
+transforms:
+  geoip:
+    type: remap
+    inputs: [normalize]
+    source: |-
+      if exists(._drop) { return . }
+      geo = object(.geo) ?? {}
+      ip = string(.client_ip) ?? ""
+      if ip != "" {
+        record = get_enrichment_table_record("geoip_db", {"ip": ip}) ?? null
+        if is_object(record) {
+          name = string(get(record, ["country", "names", "en"]) ?? null) ?? ""
+          code = string(get(record, ["country", "iso_code"]) ?? null) ?? ""
+          if name != "" { geo.country = name }
+          if code != "" { geo.country_code = code }
+        }
+      }
+      .geo_json = if length(geo) > 0 { encode_json(geo) } else { null }
+      del(.geo)
+      del(.client_ip)

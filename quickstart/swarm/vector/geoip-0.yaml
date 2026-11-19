@@ -1,0 +1,11 @@
+# GEOIP_ENABLED=0: keep the geo context the game sent, add no lookup.
+transforms:
+  geoip:
+    type: remap
+    inputs: [normalize]
+    source: |-
+      if exists(._drop) { return . }
+      geo = object(.geo) ?? {}
+      .geo_json = if length(geo) > 0 { encode_json(geo) } else { null }
+      del(.geo)
+      del(.client_ip)

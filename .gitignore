@@ -20,23 +20,12 @@ __pycache__/
 *.log
 
 # ----------------------------
-# SQLMesh local artifacts
+# Local caches and logs
 # ----------------------------
 .cache/
-.sqlmesh/
 .logs/
 logs/
 *.log
-
-# SQLMesh generated DAG / reports if you create them locally
-dag.html
-sqlmesh_dag.html
-
-# dbt local artifacts
-dbt_project/target/
-dbt_project/logs/
-dbt_project/dbt_packages/
-dbt_project/.user.yml
 
 # ----------------------------
 # Local databases
@@ -47,17 +36,8 @@ dbt_project/.user.yml
 *.sqlite3
 
 # ----------------------------
-# Ansible secrets
+# Swarm deployment: generated secrets and the operator's datasets
 # ----------------------------
-quickstart/ansible/inventory.yml
-quickstart/ansible/group_vars/all/main.yml
-quickstart/ansible/group_vars/all/vault.yml
-quickstart/ansible/.vault-pass
-
-# Operator-provided GeoIP databases
-quickstart/vm_rawbbit_one/geoip/*.mmdb
-
-.ansible/
-# Ansible controller-built Go host helpers
-quickstart/ansible/.build/
 quickstart/swarm/.generated/
+quickstart/swarm/datasets.json
+*.mmdb

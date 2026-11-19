@@ -3,67 +3,51 @@
 One stack for the whole pipeline, on one node or many:
 
 ```text
-Producer -> Caddy -> collector-api (N replicas) -> NATS JetStream -> raw-writer
-  -> SeaweedFS (local S3) -> ingestion runner -> ClickHouse -> MCP / Metabase
-                         \-> optional rclone copy to AWS S3
+game SDK -> Caddy -> Vector (N replicas) -> ClickHouse -> MCP / Metabase
+                                              \-> daily BACKUP (local, optional S3)
 ```
+
+ClickHouse is the source of truth. Vector answers a request only after
+ClickHouse stored its events, so it keeps no state of its own.
 
 ## Placement
 
 | Service | Replicas | Where |
 |---|---|---|
 | `caddy` | 1 | data node (TLS certificates on disk, host-mode ports 80/443) |
-| `nats` | 1 | data node (JetStream store) |
-| `seaweedfs` | 1 | data node (master, volume, filer and S3 gateway in one `weed server` process) |
-| `seaweed-bucket-init` | one-shot job | data node |
 | `clickhouse` | 1 | data node |
+| `clickhouse-setup` | one-shot job | any node (talks to ClickHouse over the network) |
+| `clickhouse-backup` | 1 | data node (prunes the local backup directory) |
 | `postgres` | 1 | data node (Metabase state) |
-| `dbt-runner` | 1 | data node (lock and state files; two runners must never overlap) |
-| `collector-api` | `COLLECTOR_API_REPLICAS` (2) | any node |
-| `raw-writer` | `RAW_WRITER_REPLICAS` (1) | any node |
+| `vector` | `VECTOR_REPLICAS` (1) | any node |
 | `mcp-server` | `MCP_SERVER_REPLICAS` (1) | any node |
 | `metabase` | `METABASE_REPLICAS` (1) | any node |
-| `aws-replica` (optional) | 1 | any node |
 
 The **data node** is the manager with the label `rawbbit.data=true`. Every
 stateful service uses bind mounts under `RAWBBIT_DATA_ROOT` (`/srv/rawbbit`)
 on that node, so the label must be on exactly one node; `deploy.sh` refuses to
-deploy otherwise. If the data node is down, ingestion stops: the collectors
-return 5xx because NATS is unreachable, and the SDKs keep events in their local
-queues and retry. This stack scales the stateless tier; it does not make the
+deploy otherwise. If ClickHouse is down, Vector keeps the requests open and
+retries; the SDKs time out, keep the events in their local queues and send
+them again later. This stack scales the stateless tier; it does not make the
 data tier highly available.
 
 Caddy publishes 80/443 in host mode on the data node, so point the public DNS
 names there. Host mode preserves the client address (the routing mesh would
-replace it), and the collector hashes that address into `ingest.ip_hash`.
-Caddy forwards to the collector service VIP, which load-balances across all
-replicas on all nodes.
+replace it); Vector hashes it into `ingest_ip_hash` and uses it for GeoIP.
 
 ## Requirements
 
 - Docker Engine 24+ on every node (`replicated-job`, `ulimits` and
-  `max_replicas_per_node` in stacks). Tested with 29.x.
+  `max_replicas_per_node` in stacks). Tested with 27.x and 29.x.
 - Between nodes: TCP 2377, TCP/UDP 7946, UDP 4789 and **ESP (IP protocol
   50)**, because the overlay networks are encrypted. On Oracle Cloud, add
   these to the VCN security list or NSG.
-- Multi-arch (`linux/amd64`, `linux/arm64`) Go images for collector-api,
-  raw-writer, mcp-server and the ingestion runner in a registry every node can
-  pull from. Swarm cannot build images. The older
-  `ghcr.io/mirlan-irokez/rawbbit-*` tags are the Python builds and
-  `linux/amd64` only. Build, for example:
-
-  ```bash
-  docker buildx build --platform linux/amd64,linux/arm64 \
-    -t registry.example.com/rawbbit-collector-api:1.0.0 --push backend/collector-api
-  docker buildx build --platform linux/amd64,linux/arm64 \
-    -t registry.example.com/rawbbit-raw-writer:1.0.0 --push backend/raw-writer
-  docker buildx build --platform linux/amd64,linux/arm64 \
-    -t registry.example.com/rawbbit-mcp-server:1.0.0 --push mcp-server
-  docker buildx build --platform linux/amd64,linux/arm64 \
-    -t registry.example.com/rawbbit-dbt-runner:1.0.0 --push dbt_project
-  ```
-
-- `bash` 4+ and `sha256sum` on the manager you deploy from.
+- The MCP server image for `linux/amd64` and/or `linux/arm64` in a registry
+  every node can pull from (CI publishes `ghcr.io/<owner>/rawbbit-mcp-server`
+  for each release tag). The other images are upstream: Caddy, Vector,
+  ClickHouse, Postgres and Metabase.
+- `bash` 4+ and `sha256sum` on the manager you deploy from, plus `jq` (or
+  Docker, which runs the jq image) when you use datasets.
 
 ## Deploy
 
@@ -94,9 +78,10 @@ replicas on all nodes.
    $EDITOR .env
    ```
 
-   `deploy.sh` refuses to run while any `change_me` value is left. The
-   SeaweedFS identities file is generated from the three `S3_*` credential
-   pairs (writer, reader, admin), so there is no separate `s3.json` to edit.
+   `deploy.sh` refuses to run while any `change_me` value is left.
+   `COLLECTOR_API_KEYS_JSON` maps each API key to the one `app_id` it may
+   send, for example `{"long-random-key":"com.example.mygame"}`. Browser games
+   need their origin in `CORS_ALLOW_ORIGINS`.
 
 4. Deploy (and later, update) from the master:
 
@@ -104,144 +89,220 @@ replicas on all nodes.
    ./deploy.sh
    ```
 
-   It reads `.env` with Compose dotenv rules, checks the cluster, names every
-   config and secret by a hash of its content (Swarm configs are immutable,
-   so changing a file rolls only the services that use it), runs
-   `docker stack deploy --prune --with-registry-auth` and removes unused older
-   configs and secrets. `./deploy.sh --render` prints the interpolated stack
-   without deploying.
+   It reads `.env` with Compose dotenv rules, checks the cluster, renders the
+   dataset files, names every config and secret by a hash of its content
+   (Swarm configs are immutable, so changing a file rolls only the services
+   that use it), runs `docker stack deploy --prune --with-registry-auth` and
+   removes unused older configs and secrets. `./deploy.sh --render` prints the
+   interpolated stack without deploying.
+
+   On every deploy where its inputs changed, the `clickhouse-setup` job
+   creates `analytics.events`, the service users and every dataset. It is
+   idempotent. Follow it with
+   `docker service logs rawbbit_clickhouse-setup`.
 
 5. Verify:
 
    ```bash
    docker stack services rawbbit
    curl -i https://collector.example.com/healthz
+   curl -i https://collector.example.com/v1/events:batch \
+     -H 'Content-Type: application/json' -H 'X-API-Key: <key>' \
+     -d '{"events":[{"event_id":"'"$(uuidgen)"'","app_id":"com.example.mygame",
+          "event_name":"test_event","event_timestamp":"'"$(date -u +%FT%TZ)"'"}]}'
    ```
 
-   Send a test event as in the
-   [VM-one verification](../vm_rawbbit_one/README.md#verification) (use your
-   `COLLECTOR_API_KEYS_JSON` key and `app_id`). Parquet lands after
-   `RAW_FLUSH_INTERVAL_SECONDS`; check it on the data node with:
+   A `200` means the event is in ClickHouse:
 
    ```bash
-   c=$(docker ps -q -f name=rawbbit_seaweedfs)
-   echo "fs.ls -l /buckets/rawbbit-raw/raw" |
-     docker exec -i "$c" weed shell -master=localhost:9333 -filer=localhost:8888
+   docker exec "$(docker ps -q -f name=rawbbit_clickhouse)" clickhouse-client \
+     -u admin --password "$CLICKHOUSE_ADMIN_PASSWORD" \
+     -q "SELECT event_name, event_time FROM analytics.events FINAL ORDER BY received_time DESC LIMIT 5"
    ```
 
-   The runner loads it at minute 12 of each hour. To load now:
+   For a fuller check, run [`rawbbit-loadgen`](../../tools/loadgen/README.md)
+   against the deployment.
 
-   ```bash
-   docker exec "$(docker ps -q -f name=rawbbit_dbt-runner)" /app/bin/dbt-job hourly
-   ```
+## What the collector accepts
+
+`POST /v1/events:batch` with `X-API-Key` and a JSON body
+`{"events": [ ... ]}`, the same request the Rawbbit SDKs send:
+
+| Request | Answer |
+|---|---|
+| valid | `200` with an empty body, after ClickHouse stored the events |
+| missing or unknown `X-API-Key` | `401` |
+| body is not JSON | `400` |
+| body over `MAX_REQUEST_BYTES` | `413` (the SDKs split the batch) |
+| an event without `event_id`, `app_id` or `event_name`, with an unparseable `event_timestamp`, or with an `app_id` the key may not send | that event is dropped, the rest is stored, `200` |
+
+Dropped events are logged with the reason:
+
+```bash
+docker service logs rawbbit_vector 2>&1 | grep event_dropped
+```
+
+`event_timestamp` may be RFC 3339 (`2026-11-19T10:00:00Z`, with or without
+fraction and offset), `YYYY-MM-DD HH:MM:SS` (UTC) or a number of seconds or
+milliseconds since the epoch.
+
+A resent event (same `app_id` and `event_id`) collapses into one row when
+ClickHouse merges parts; add `FINAL` to a query that must be exact before
+that. MCP, Metabase and the load generator see the table as it is.
+
+## Datasets
+
+A dataset sends chosen `app_id`s to their own database and gives them their
+own read-only MCP endpoint, for example to hand a game's data to someone
+without the rest:
+
+```bash
+cp datasets.example.json datasets.json   # git-ignored
+$EDITOR datasets.json
+./deploy.sh
+```
+
+```json
+{
+  "datasets": [
+    {
+      "id": "team_a",
+      "app_ids": ["com.example.team_a_game"],
+      "main_exposed": false,
+      "clickhouse_password": "long-random-password",
+      "mcp_tokens": { "agent": "long-random-token" }
+    }
+  ]
+}
+```
+
+For each dataset, `clickhouse-setup` creates the database `dataset_<id>`, the
+table `dataset_<id>.events` (same structure as `analytics.events`) and the
+read-only ClickHouse user `mcp_<id>`. Vector inserts events of the listed
+`app_id`s there instead of `analytics.events`. The MCP server serves the
+dataset at `https://<MCP_PUBLIC_HOSTNAME>/datasets/<id>/mcp` for the
+`mcp_tokens` bearer tokens. `main_exposed: true` also offers the dataset to
+the main `/mcp` endpoint's tools. Metabase's ClickHouse user can read every
+dataset.
+
+- Use another `RAWBBIT_DATASETS_FILE` path if you keep the file elsewhere.
+- Removing a dataset (or an `app_id`) from the file stops routing and removes
+  its MCP endpoint; its database, data and user stay. Drop them by hand.
+- Moving an `app_id` into a dataset does not move its existing rows.
+
+## Backups
+
+`clickhouse-backup` runs ClickHouse's native `BACKUP DATABASE` for
+`analytics` and every `dataset_*` database each day at `BACKUP_AT` (UTC):
+
+- locally to `${RAWBBIT_DATA_ROOT}/clickhouse/backups/<database>/<timestamp>.zip`,
+  keeping the newest `BACKUP_KEEP_LOCAL` copies;
+- when `BACKUP_S3_URL` is set, also to `<BACKUP_S3_URL>/<database>/<timestamp>.zip`
+  (any S3-compatible service; the key needs `s3:PutObject`, `s3:GetObject` and
+  `s3:ListBucket`). Expire old copies with a bucket lifecycle rule.
+
+Run one now:
+
+```bash
+docker exec "$(docker ps -q -f name=rawbbit_clickhouse-backup)" /bin/bash /etc/rawbbit/backup.sh --now
+docker service logs rawbbit_clickhouse-backup
+```
+
+Restore a database (drop or rename the current one first):
+
+```bash
+docker exec -it "$(docker ps -q -f name=rawbbit_clickhouse)" clickhouse-client -u admin --password ... \
+  -q "RESTORE DATABASE analytics FROM File('analytics/20261119T033000Z.zip')"
+# or from S3:
+#  -q "RESTORE DATABASE analytics FROM S3('https://bucket.s3.region.amazonaws.com/rawbbit/analytics/<stamp>.zip', '<key>', '<secret>')"
+```
+
+Users and grants are not part of the backup; `clickhouse-setup` recreates
+them on the next deploy (`docker service update --force rawbbit_clickhouse-setup`
+runs it again right away).
 
 ## Scaling
 
 ```bash
-docker service scale rawbbit_collector-api=4
+docker service scale rawbbit_vector=3
 ```
 
-or set `COLLECTOR_API_REPLICAS` in `.env` and run `./deploy.sh` again (a
-plain `docker service scale` is reverted by the next deploy).
+or set `VECTOR_REPLICAS` in `.env` and run `./deploy.sh` again (a plain
+`docker service scale` is reverted by the next deploy).
 
-- **collector-api**: stateless; scale freely. The same `GEOIP_HOST_DIR`
-  (with the `.mmdb` when `GEOIP_ENABLED=1`) must exist on every node that can
-  run it.
-- **raw-writer**: replicas share one durable JetStream pull consumer, and each
-  writes uniquely named Parquet files. Each replica buffers up to
-  `RAW_MAX_BUFFERED_EVENTS` (default 80 % of `NATS_MAX_ACK_PENDING`), so set
-  it to about `0.8 * NATS_MAX_ACK_PENDING / replicas` when scaling.
+- **vector**: stateless; scale freely. The same `GEOIP_HOST_DIR` (with
+  `dbip-country-lite.mmdb` when `GEOIP_ENABLED=1`) must exist on every node
+  that can run it.
 - **mcp-server**: stateless; scale freely.
 - **metabase**: keep 1 unless you have tested Metabase's multi-instance mode.
 
-## Optional: off-site copy to AWS S3
+## GeoIP
 
-With one data node, the raw Parquet and ClickHouse share a disk. Set
-`AWS_REPLICA_ENABLED=1` and the `AWS_REPLICA_*` values, then run
-`./deploy.sh`: it adds [`stack.aws-replica.yml`](stack.aws-replica.yml), an
-rclone loop that copies new raw objects from SeaweedFS to an AWS bucket every
-`AWS_REPLICA_INTERVAL_SECONDS`.
-
-- It uses `rclone copy --ignore-existing`, never `sync`: nothing is deleted in
-  AWS, and existing objects are not rewritten (raw-writer objects are
-  immutable). The IAM user needs `s3:PutObject` and `s3:ListBucket` only.
-- Each pass skips objects older than `AWS_REPLICA_MAX_AGE` (72h). After a longer
-  outage, raise it once to cover the gap.
-- ClickHouse keeps reading from the local SeaweedFS, so ingestion causes no AWS
-  egress. AWS charges storage plus PUT/LIST requests.
-- AWS bucket names cannot contain underscores.
-- Another S3-compatible destination works too: set `AWS_REPLICA_ENDPOINT` and
-  an rclone provider name in `AWS_REPLICA_PROVIDER` (`Other`, `Cloudflare`,
-  `Wasabi`, `Minio`, ...).
-- To restore, copy the objects back into SeaweedFS (or point
-  `CLICKHOUSE_RAW_S3_URL` at AWS) and run a runner backfill.
-
-Setting `AWS_REPLICA_ENABLED=0` and deploying again removes the service
-(`--prune`).
+With `GEOIP_ENABLED=1`, Vector looks up the client address in
+`GEOIP_HOST_DIR/dbip-country-lite.mmdb` (any MaxMind-format country database,
+for example [DB-IP Country Lite](https://db-ip.com/db/download/ip-to-country-lite))
+and adds `country` and `country_code` to the event's `geo_json`. The file
+must exist before Vector starts.
 
 ## End-to-end test
 
-`./e2e.sh --build` builds the four Go images, deploys this stack on a
-single-node swarm with random secrets, two collectors and two raw-writers,
-and runs [`rawbbit-loadgen`](../../tools/loadgen/README.md). The load
-generator sends events (plus requests that must be rejected and duplicate
-batches) through Caddy, triggers a runner backfill and checks through the MCP
-endpoint that ClickHouse holds every accepted event exactly once. A second
-backfill must not duplicate rows. The stack and its data are removed
-afterwards (`--keep` leaves them). It publishes ports 80/443, so run it on a
-CI runner, a throwaway VM or in Docker-in-Docker:
+`./e2e.sh --build` builds the MCP image, deploys this stack on a single-node
+swarm with random secrets, two Vector replicas and a dataset, and runs
+[`rawbbit-loadgen`](../../tools/loadgen/README.md) twice: once for a main app
+(events, rejected requests, dropped events and duplicate batches, checked
+through the main MCP endpoint) and once for the dataset app (checked through
+the dataset's own MCP endpoint). It also checks that the main MCP endpoint
+cannot read the dataset, CORS, a backup and MCP auth. The stack and its data
+are removed afterwards (`--keep` leaves them). It publishes ports 80/443, so
+run it on a CI runner, a throwaway VM or in Docker-in-Docker:
 
 ```bash
-docker run -d --privileged --name rawbbit-e2e docker:29-dind
-# copy the repository in, install bash and curl, then:
-docker exec rawbbit-e2e sh -c "cd /work/quickstart/swarm && ./e2e.sh --build"
+docker run -d --privileged --name rawbbit-e2e -v "$PWD/../..:/repo" docker:27-dind
+docker exec rawbbit-e2e sh -c 'apk add -q bash curl coreutils sudo jq'
+docker exec rawbbit-e2e bash -c 'cd /repo/quickstart/swarm && ./e2e.sh --build'
 ```
 
 The CI workflow runs it on every push and pull request.
 
-## Differences from the two-VM guides
+## Notes
 
-- ClickHouse, SeaweedFS S3, NATS and Postgres are reachable only on the
-  encrypted overlay network. No `127.0.0.1` ports are published (Swarm cannot
-  bind to loopback). For ClickHouse IDE access, add a Caddy block (see
+- ClickHouse and Postgres are reachable only on the encrypted overlay
+  network. No `127.0.0.1` ports are published (Swarm cannot bind to
+  loopback). For ClickHouse IDE access, add a Caddy block (see
   [`Caddyfile`](Caddyfile)) or use `docker exec` into the ClickHouse task.
-- ClickHouse reads raw Parquet from `http://seaweedfs:8333/<bucket>/<prefix>/`
-  inside the cluster; the S3 endpoint is not published.
-- `RAWBBIT_RAW_LOAD_MODE` defaults to `dbt`: the runner owns raw ingestion and
-  the host cron shell loader is not used.
-- Optional MCP datasets (`datasets-runtime.json`) and the
-  `rawbbit-provision-datasets` / `rawbbit-deploy-dbt-runner` host helpers are
-  not wired into this stack; they assume the two-VM Compose layout. For a
-  runner upgrade that changes routing, drain it first with
-  `docker service scale rawbbit_dbt-runner=0`, wait until no job is running,
-  then deploy.
-- The runner needs `SELECT` on `system.processes`, `system.mutations`,
-  `system.query_log`, `system.tables` and `system.columns` for its safety
-  checks. The two-VM guides leave these grants to an operator; here
-  [`clickhouse/03_dbt_observation_grants.sh`](clickhouse/03_dbt_observation_grants.sh)
-  applies them on the first boot of an empty ClickHouse data directory. Without
-  them the runner fences itself and loads nothing (`dbt-job verify-control`
-  returns `control_access_unverified`).
-- SeaweedFS runs as uid 1000 (`seaweed`) and the runner as uid 1000; the
-  bootstrap script creates their directories with that owner.
-- There is no `depends_on` in Swarm. On a first deploy, raw-writer and the
-  collectors may restart a few times until NATS and the stream are up; that
-  is expected.
-- Secrets reach containers as environment variables, as in the Compose guides.
-  `docker service inspect` shows them to anyone with manager access.
+- Vector 0.57+ does not expand `${VAR}` in its configuration, so
+  [`vector/vector.yaml`](vector/vector.yaml) is static: its programs read
+  `COLLECTOR_API_KEYS_JSON`, `IP_HASH_SALT` and `RAWBBIT_APP_DATASETS` from the
+  environment, and the ClickHouse password from a Swarm secret.
+- When you change a ClickHouse password in `.env`, `clickhouse-setup` updates
+  it on the next deploy while the services restart with the new value; inserts
+  can fail for a few seconds in between, and the SDKs resend.
+- There is no `depends_on` in Swarm. On a first deploy, Vector, MCP and the
+  setup job may retry for a while until ClickHouse is up; that is expected.
+- Secrets reach containers as environment variables (except the Vector
+  password and the dataset files, which are Swarm secrets).
+  `docker service inspect` shows the variables to anyone with manager access.
+- An existing install from the NATS/Parquet pipeline (tag
+  `go-collector-final`) has a `MergeTree` `analytics.events` with two extra
+  columns. `clickhouse-setup` leaves an existing table alone; to switch,
+  rename it, deploy, and copy the rows:
+  `INSERT INTO analytics.events SELECT * EXCEPT (nats_stream, nats_sequence) REPLACE (ifNull(received_time, event_time) AS received_time) FROM analytics.events_old WHERE event_id IS NOT NULL`.
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | `stack.yml` | the stack |
-| `stack.aws-replica.yml` | optional rclone copy to AWS S3 |
 | `.env.example` | all settings |
-| `deploy.sh` | validate, name configs by hash, deploy, clean up |
+| `datasets.example.json` | dataset template (copy to `datasets.json`) |
+| `deploy.sh` | validate, render datasets, name configs by hash, deploy, clean up |
 | `bootstrap-data-node.sh` | host directories |
 | `e2e.sh` | end-to-end test on a single-node swarm (used by CI) |
-| `Caddyfile` | public routes: collector, MCP, Metabase |
-
-The NATS, ClickHouse and Postgres config files are shared with
-[`../vm_rawbbit_one`](../vm_rawbbit_one) and
-[`../vm_rawbbit_two`](../vm_rawbbit_two).
+| `Caddyfile` | public routes: collector (CORS, size limit), MCP, Metabase |
+| `vector/vector.yaml` | event intake: auth, validation, normalisation, routing, ClickHouse sinks |
+| `vector/geoip-0.yaml`, `vector/geoip-1.yaml` | GeoIP off / on |
+| `clickhouse/schema.sql` | `analytics.events` |
+| `clickhouse/setup.sh` | schema, users, grants and datasets (the `clickhouse-setup` job) |
+| `clickhouse/backup.sh` | daily backups (the `clickhouse-backup` service) |
+| `clickhouse/config.d/`, `clickhouse/users.d/` | memory profiles and the backup path |
+| `postgres/01_metabase_database.sh` | Metabase database and user |

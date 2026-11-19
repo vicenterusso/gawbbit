@@ -1,5 +1,49 @@
+# Collector: the game SDKs post event batches here. Caddy terminates TLS,
+# answers CORS preflights, enforces the request size limit (413) and passes
+# the client address to Vector in X-Forwarded-For (Caddy replaces any
+# X-Forwarded-For the client sent). Vector checks the API key.
 {$COLLECTOR_PUBLIC_HOSTNAME} {
-	reverse_proxy collector-api:8080
+	request_body {
+		max_size {$MAX_REQUEST_BYTES}
+	}
+
+	# Origins allowed to call the collector from a browser. deploy.sh builds
+	# CORS_ORIGIN_REGEX from the comma-separated CORS_ALLOW_ORIGINS ("*" allows
+	# every origin; empty allows none).
+	@cors header_regexp Origin {$CORS_ORIGIN_REGEX}
+	@preflight {
+		method OPTIONS
+		header_regexp Origin {$CORS_ORIGIN_REGEX}
+	}
+
+	handle /healthz {
+		rewrite * /health
+		reverse_proxy vector:8686
+	}
+
+	handle @preflight {
+		header {
+			Access-Control-Allow-Origin "{http.request.header.Origin}"
+			Access-Control-Allow-Methods "POST, OPTIONS"
+			Access-Control-Allow-Headers "{http.request.header.Access-Control-Request-Headers}"
+			Access-Control-Max-Age "{$CORS_MAX_AGE_SECONDS}"
+			Vary Origin
+		}
+		respond 204
+	}
+
+	handle /v1/events:batch {
+		header @cors {
+			Access-Control-Allow-Origin "{http.request.header.Origin}"
+			Access-Control-Expose-Headers "Retry-After"
+			Vary Origin
+		}
+		reverse_proxy vector:8080
+	}
+
+	handle {
+		respond `{"detail":"Not Found"}` 404
+	}
 }
 
 {$MCP_PUBLIC_HOSTNAME} {
@@ -21,8 +65,8 @@
 	}
 }
 
-# ClickHouse and SeaweedFS S3 are reachable only inside the overlay network.
-# To expose ClickHouse for IDE access, add a block such as:
+# ClickHouse is reachable only inside the overlay network. To expose it for
+# IDE access, add a block such as:
 #
 # clickhouse.example.com {
 # 	encode zstd gzip
