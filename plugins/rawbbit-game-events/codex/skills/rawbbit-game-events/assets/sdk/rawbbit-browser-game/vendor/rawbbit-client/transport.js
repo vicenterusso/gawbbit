@@ -31,6 +31,10 @@ function readRetryAfter(response) {
   }
 }
 
+// An empty 2xx body is the collector's plain acknowledgment (Rawbbit's Vector
+// intake answers 200 with no body once ClickHouse stored the batch).
+const EMPTY_BODY = Symbol("empty response body")
+
 async function readResponseBody(response, maxResponseBytes, signal) {
   let reader
   let onAbort
@@ -42,6 +46,7 @@ async function readResponseBody(response, maxResponseBytes, signal) {
   }
   try {
     if (signal.aborted) throw signal.reason
+    if (response.body === null || response.body === undefined) return EMPTY_BODY
     if (maxResponseBytes !== null) {
       // Never fall back to an unbounded json()/text() read for modern callers.
       reader = response.body.getReader()
@@ -55,7 +60,10 @@ async function readResponseBody(response, maxResponseBytes, signal) {
       signal.addEventListener("abort", onAbort, { once: true })
     })
     const reading = (async () => {
-      if (maxResponseBytes === null) return response.json()
+      if (maxResponseBytes === null) {
+        const text = await response.text()
+        return text === "" ? EMPTY_BODY : JSON.parse(text)
+      }
       const chunks = []
       let size = 0
       while (true) {
@@ -67,6 +75,7 @@ async function readResponseBody(response, maxResponseBytes, signal) {
         if (size > maxResponseBytes) throw new Error("Collector response body exceeds byte limit")
         if (value.byteLength) chunks.push(value)
       }
+      if (size === 0) return EMPTY_BODY
       const bytes = new Uint8Array(size)
       let offset = 0
       for (const chunk of chunks) {
@@ -136,12 +145,17 @@ export async function performCollectorRequest({
     const retryAfter = readRetryAfter(response)
     let body = null
     let bodyError = false
+    let emptyBody = false
     try {
       body = maxResponseBytes === null && timeoutPolicy === "headers" && !signal
-        ? await response.json()
+        ? await (async () => { const text = await response.text(); return text === "" ? EMPTY_BODY : JSON.parse(text) })()
         : await readResponseBody(response, maxResponseBytes, controller.signal)
     } catch {
       bodyError = true
+    }
+    if (body === EMPTY_BODY) {
+      body = null
+      emptyBody = true
     }
     return {
       ok: response.ok,
@@ -151,6 +165,7 @@ export async function performCollectorRequest({
       networkError: false,
       cancelled: Boolean(signal?.aborted),
       bodyError,
+      emptyBody,
       ...(timeoutPolicy === "body" && controller.signal.aborted && !signal?.aborted ? { timedOut: true } : {}),
     }
   } finally {

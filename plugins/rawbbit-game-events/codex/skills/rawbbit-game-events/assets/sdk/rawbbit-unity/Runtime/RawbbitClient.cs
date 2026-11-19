@@ -507,8 +507,7 @@ namespace Rawbbit.Unity
 
                         if (response.StatusCode >= 200 && response.StatusCode < 300 && !response.NetworkError)
                         {
-                            int accepted;
-                            if (!TryReadAcceptedCount(response.ResponseBody, out accepted) || accepted != 1)
+                            if (!AcknowledgesBatch(response.ResponseBody, 1))
                             {
                                 _queue.LatchFault("recovery_probe_acceptance_mismatch", response.StatusCode, _clock.UtcNow, true);
                                 return new RawbbitRecoveryResult { Succeeded = false, SafeDiagnosticCode = "recovery_probe_acceptance_mismatch" };
@@ -670,8 +669,7 @@ namespace Rawbbit.Unity
                         }
                         if (response.StatusCode >= 200 && response.StatusCode < 300 && !response.NetworkError)
                         {
-                            int accepted;
-                            if (TryReadAcceptedCount(response.ResponseBody, out accepted) && accepted == batch.Records.Count)
+                            if (AcknowledgesBatch(response.ResponseBody, batch.Records.Count))
                             {
                                 _queue.Acknowledge(batch.Handles);
                                 _retryAttempt = 0;
@@ -779,6 +777,17 @@ namespace Rawbbit.Unity
             double requestedTicks = Math.Max(0.0, seconds) * TimeSpan.TicksPerSecond;
             long ticksToAdd = requestedTicks >= availableTicks ? availableTicks : (long)requestedTicks;
             return new DateTimeOffset(utc.AddTicks(ticksToAdd), TimeSpan.Zero);
+        }
+
+        // A 2xx with an empty body is the collector's plain acknowledgment (Rawbbit's
+        // Vector intake answers 200 with no body once ClickHouse stored the batch).
+        // A body that reports accepted_events must report exactly the events sent.
+        // A null body (unreadable or over 4 KB) is never an acknowledgment.
+        private static bool AcknowledgesBatch(string responseBody, int count)
+        {
+            if (responseBody != null && responseBody.Length == 0) return true;
+            int accepted;
+            return TryReadAcceptedCount(responseBody, out accepted) && accepted == count;
         }
 
         private static bool TryReadAcceptedCount(string responseBody, out int accepted)

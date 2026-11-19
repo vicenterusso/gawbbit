@@ -1,6 +1,0 @@
-services:
-  mcp-server:
-    environment:
-      MCP_DATASETS_FILE: /run/rawbbit/datasets.json
-    volumes:
-      - ./datasets-runtime.json:/run/rawbbit/datasets.json:ro

@@ -15,6 +15,21 @@ test("normal delivery requires an exact accepted_events count and preserves froz
   assert.deepEqual(after.meta.retry, { attempt: 0, notBefore: 0 })
 })
 
+test("an empty 2xx body is a plain acknowledgment", async t => {
+  for (const make of [() => new Response("", { status: 200 }), () => new Response(null, { status: 200 })]) {
+    await t.test("empty", async t => {
+      const h = makeHarness(t), client = await h.create()
+      h.setFetch(make)
+      await grant(client); await stored(client, [{ eventName: "first" }, { eventName: "second" }])
+      assert.equal((await bounded(client.flush())).status, "empty")
+      const after = await readState(client)
+      assert.equal(after.records.length, 0)
+      assert.equal(after.meta.fault, null)
+      assert.equal(h.requests.length, 1)
+    })
+  }
+})
+
 test("malformed, missing, noninteger and mismatched accepted counts latch a fault without deleting records", async t => {
   for (const body of [{ accepted_events: 0 }, { accepted_events: 2 }, { accepted_events: "1" },
     { accepted_events: 1.5 }, { accepted_events: -1 }, {}, null, "not-json"]) {

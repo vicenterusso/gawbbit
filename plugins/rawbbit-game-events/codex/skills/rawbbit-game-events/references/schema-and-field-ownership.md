@@ -23,7 +23,7 @@ Enforce field ownership at the game adapter/SDK boundary and test the serialized
 - **Game:** approved event name, committed gameplay parameters, approved user/account ID and user properties, supported app-owned device/traffic context, and current consent decision. Capture historical values at the transition, not from mutable later UI state. Avoid free text, secrets, unbounded values, and identifiers disguised as business parameters.
 - **Adapter/SDK:** `app_id`, environment, envelope/ID/time defaults, pseudonymous installation and session IDs, platform, request/auth header, queue/retry, and confirmed `consent.analytics_storage`. Only documented SDK escape hatches with explicit event-map ownership may override defaults; the game must not forge SDK-owned session or consent values.
 - **Collector:** top-level `received_at` and `ingest.*` request/receipt/network metadata. Game code must never send these, even though the Collector schema has fields for them.
-- **NATS/raw storage:** queue sequence, storage path/partition, and writer lineage. Never author them in a client event.
+- **Ingest pipeline (Vector, ClickHouse):** insert and storage lineage. Never author it in a client event.
 
 The SDKs allow JSON-compatible business data under `event_params` and `user_properties`, but the event map must fix type, unit, allowed domain, source, and frequency. 
 `schema_version`, `product`, `surface`, and `source_type` are SDK/adapter event-parameter defaults, not arbitrary top-level Collector fields. 
@@ -33,5 +33,5 @@ The SDKs allow JSON-compatible business data under `event_params` and `user_prop
 
 In a game-level adapter fixture, attempt caller-supplied top-level `received_at` and `ingest`, plus overridden `user.session_id` and `consent.analytics_storage`. 
 Assert each is rejected or ignored according to the selected SDK and none is emitted as caller-controlled wire data. 
-Validate the remaining wire envelope against the Collector schema separately. Also assert no NATS/storage lineage. 
+Validate the remaining wire envelope against the Collector schema separately. Also assert no storage lineage fields. 
 Do not confuse accepted shape with authority to populate a field.

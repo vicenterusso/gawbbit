@@ -23,9 +23,9 @@ Use this structure unless the target repository already has an analytics-documen
 - Game code owns approved event names and business parameters from authoritative state transitions.
 - The analytics adapter/SDK owns envelope normalization, app/environment configuration, event identity/time, pseudonymous/session identity, confirmed consent, and transport.
 - The Collector owns receive time, request ID, HTTP/IP metadata, and network-derived enrichment.
-- NATS/raw storage own queue and storage lineage.
+- The ingest pipeline (Vector, ClickHouse) owns insert and storage lineage.
 - The Collector schema accepts some server-owned fields; acceptance is not permission for a client to author them.
-- Client code must not manufacture SDK session/consent, Collector, queue, or storage fields.
+- Client code must not manufacture SDK session/consent, Collector, or storage fields.
 
 ## Consent and identity
 

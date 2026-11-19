@@ -1,8 +1,0 @@
-.git
-.gitignore
-runtime
-logs
-target
-testdata
-**/*_test.go
-*.md

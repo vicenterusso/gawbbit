@@ -1,9 +1,0 @@
-# Build context only needs go.mod, go.sum, cmd/ and internal/.
-.git/
-testdata/
-**/*_test.go
-*.md
-.env
-.env.example
-dist/
-build/

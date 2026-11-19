@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Treats a 2xx response with an empty body as an acknowledgment of the whole batch, as sent by the Rawbbit Vector intake after ClickHouse stored the events. A body that reports `accepted_events` must still report exactly the number of events sent.
 - Makes the browser-game source directory self-contained by keeping the protocol modules needed by the build under `vendor/rawbbit-client/`.
 
 ## 0.1.0 — initial source version

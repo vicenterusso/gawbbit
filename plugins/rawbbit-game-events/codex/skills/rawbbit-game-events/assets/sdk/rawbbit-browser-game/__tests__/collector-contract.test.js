@@ -100,6 +100,7 @@ test("portable Collector HTTP fixture starts one bounded POST with the exact req
     networkError: false,
     cancelled: false,
     bodyError: false,
+    emptyBody: false,
   })
   assert.equal(resolveCollectorEndpoint("https://collector.example/V1/EVENTS:BATCH/"),
     "https://collector.example/V1/EVENTS:BATCH")

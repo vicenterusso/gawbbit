@@ -133,7 +133,11 @@ export class Sender {
       const records = started.records.filter(prepared => state.records.some(record => record.handle === prepared.handle && record.payloadJson === prepared.payloadJson && record.enqueuedAt === prepared.enqueuedAt && !record.quarantined))
       if (started.recovery && (!state.meta.fault || state.meta.fault.revision !== claim.faultRevision || state.meta.queueRevision !== claim.queueRevision)) return outcome("recoveryPending", "staleRecovery")
       if (response.ok && !response.networkError && !response.timedOut) {
-        if (Number.isSafeInteger(response.body?.accepted_events) && response.body.accepted_events === started.records.length && !response.bodyError) {
+        // An empty body is a plain acknowledgment; a body that reports a count
+        // must report exactly the number of events sent.
+        const acknowledged = (response.emptyBody && !response.bodyError) ||
+          (Number.isSafeInteger(response.body?.accepted_events) && response.body.accepted_events === started.records.length && !response.bodyError)
+        if (acknowledged) {
           if (started.recovery && records.length !== 1) return outcome("recoveryPending", "probeRecordChanged")
           c._remove(state, records.map(record => record.handle))
           state.meta.retry = { attempt: 0, notBefore: 0 }

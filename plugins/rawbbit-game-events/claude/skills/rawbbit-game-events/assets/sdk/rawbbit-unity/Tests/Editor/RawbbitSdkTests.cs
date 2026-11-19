@@ -1167,6 +1167,24 @@ namespace Rawbbit.Unity.Tests
             }
         }
 
+        [TestCase("", 0, false)]
+        [TestCase(null, 1, true)]
+        [TestCase("{}", 1, true)]
+        [TestCase("{\"accepted_events\":2}", 1, true)]
+        public async Task EmptySuccessBodyAcknowledgesButMissingOrWrongCountLatches(string body, int pending, bool faulted)
+        {
+            var queue = new RawbbitPersistentQueue(_root, _configuration, _clock);
+            using (var client = new RawbbitClient(_configuration, queue, _clock))
+            {
+                await client.ConfirmConsentAsync();
+                await client.TrackAsync(Event("empty_body_ack"));
+                RawbbitPreparedBatch prepared = client.TryBeginRequest();
+                await client.CompleteRequestAsync(prepared, new RawbbitTransportResult { StatusCode = 200, ResponseBody = body });
+                Assert.That(queue.ReadDiagnostics().PendingCount, Is.EqualTo(pending));
+                Assert.That(queue.ReadFault() != null, Is.EqualTo(faulted));
+            }
+        }
+
         [TestCase("unchanged")]
         [TestCase("fault_revision")]
         [TestCase("queue_generation")]
