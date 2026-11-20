@@ -65,6 +65,35 @@ done
 [[ -n "${CLICKHOUSE_VECTOR_PASSWORD:-}" ]] || die "CLICKHOUSE_VECTOR_PASSWORD is required"
 [[ "${GEOIP_ENABLED:-0}" =~ ^[01]$ ]] || die "GEOIP_ENABLED must be 0 or 1"
 [[ "${MAX_REQUEST_BYTES:-1048576}" =~ ^[1-9][0-9]*$ ]] || die "MAX_REQUEST_BYTES must be a number of bytes"
+export HTTPS_PORT="${HTTPS_PORT:-443}"
+if [[ ! "$HTTPS_PORT" =~ ^[1-9][0-9]{0,4}$ ]] || ((HTTPS_PORT > 65535)); then die "HTTPS_PORT must be a TCP port"; fi
+
+# --- TLS: Caddy's own certificates, or the Cloudflare origin certificate ----
+# Cloudflare's published ranges (https://www.cloudflare.com/ips/). Only they
+# may set the client address, and in cloudflare mode only they may connect.
+cloudflare_ranges="173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22
+141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22
+198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13
+131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32
+2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32"
+export TLS_MODE="${TLS_MODE:-auto}"
+case "$TLS_MODE" in
+  auto)
+    CADDY_TRUSTED_PROXIES="${CADDY_TRUSTED_PROXIES:-127.0.0.1/32}"
+    ;;
+  cloudflare)
+    CADDY_TRUSTED_PROXIES="${CADDY_TRUSTED_PROXIES:-$cloudflare_ranges}"
+    export ORIGIN_CERT_FILE="${ORIGIN_CERT_FILE:-./cloudflare/origin.pem}"
+    export ORIGIN_KEY_FILE="${ORIGIN_KEY_FILE:-./cloudflare/origin.key}"
+    [[ -s "$ORIGIN_CERT_FILE" ]] || die "TLS_MODE=cloudflare needs the Cloudflare origin certificate at $ORIGIN_CERT_FILE (ORIGIN_CERT_FILE)"
+    [[ -s "$ORIGIN_KEY_FILE" ]] || die "TLS_MODE=cloudflare needs the origin certificate's private key at $ORIGIN_KEY_FILE (ORIGIN_KEY_FILE)"
+    grep -q 'BEGIN CERTIFICATE' "$ORIGIN_CERT_FILE" || die "$ORIGIN_CERT_FILE is not a PEM certificate"
+    grep -q 'PRIVATE KEY' "$ORIGIN_KEY_FILE" || die "$ORIGIN_KEY_FILE is not a PEM private key"
+    ;;
+  *) die "TLS_MODE must be auto or cloudflare" ;;
+esac
+CADDY_TRUSTED_PROXIES="$(tr -s '[:space:]' ' ' <<< "$CADDY_TRUSTED_PROXIES" | sed 's/^ //; s/ $//')"
+export CADDY_TRUSTED_PROXIES
 
 # --- CORS: comma-separated origins -> one anchored regex for Caddy ----------
 origins="${CORS_ALLOW_ORIGINS:-}"
@@ -153,6 +182,10 @@ declare -A objects=(
   [SECRET_DATASETS_TSV]=./.generated/datasets.tsv
   [SECRET_MCP_DATASETS_JSON]=./.generated/mcp-datasets.json
 )
+if [[ "$TLS_MODE" == cloudflare ]]; then
+  objects[SECRET_ORIGIN_CERT]="$ORIGIN_CERT_FILE"
+  objects[SECRET_ORIGIN_KEY]="$ORIGIN_KEY_FILE"
+fi
 declare -a current_names=()
 for var in "${!objects[@]}"; do
   file="${objects[$var]}"
@@ -163,7 +196,7 @@ for var in "${!objects[@]}"; do
   current_names+=("$name")
 done
 
-stack_files=(-c stack.yml)
+stack_files=(-c stack.yml -c "stack.tls-$TLS_MODE.yml")
 
 if ((render)); then
   exec docker stack config "${stack_files[@]}"

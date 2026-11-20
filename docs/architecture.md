@@ -18,7 +18,7 @@ Everything runs as one Docker Swarm stack:
 
 The public edge. For the collector hostname it:
 
-- terminates TLS (automatic certificates);
+- terminates TLS (automatic certificates, or the Cloudflare origin certificate behind Cloudflare);
 - answers CORS preflights for the origins in `CORS_ALLOW_ORIGINS` and adds
   the CORS headers to responses;
 - rejects bodies over `MAX_REQUEST_BYTES` with `413`, which makes the SDKs

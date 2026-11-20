@@ -50,15 +50,15 @@ services:
       MAX_REQUEST_BYTES: ${MAX_REQUEST_BYTES:-1048576}
       CORS_ORIGIN_REGEX: ${CORS_ORIGIN_REGEX:?run ./deploy.sh}
       CORS_MAX_AGE_SECONDS: ${CORS_MAX_AGE_SECONDS:-600}
+      TLS_MODE: ${TLS_MODE:-auto}
+      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:?run ./deploy.sh}
     # Host mode keeps the real client address (the routing mesh would SNAT
     # it); Vector hashes it into ingest_ip_hash and looks up its country.
+    # TLS_MODE=auto adds port 80 (stack.tls-auto.yml); TLS_MODE=cloudflare
+    # adds the origin certificate (stack.tls-cloudflare.yml).
     ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
       - target: 443
-        published: 443
+        published: ${HTTPS_PORT:-443}
         protocol: tcp
         mode: host
     configs:

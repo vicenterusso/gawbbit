@@ -1,8 +1,38 @@
+# TLS_MODE (set in .env, see README "Behind Cloudflare") picks one of these
+# snippets for every site:
+#   auto        Caddy obtains certificates itself (ports 80 and 443).
+#   cloudflare  Cloudflare proxies the traffic; Caddy serves the Cloudflare
+#               Origin Certificate and refuses connections that do not come
+#               from Cloudflare.
+{
+	# The cloudflare snippet refuses non-Cloudflare peers before any handler.
+	order abort first
+
+	servers {
+		# Only these peers may set the client address (CF-Connecting-IP).
+		# deploy.sh sets Cloudflare's ranges in cloudflare mode and
+		# 127.0.0.1/32 (nobody, in practice) otherwise.
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES}
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
+(tls-auto) {
+}
+
+(tls-cloudflare) {
+	tls /run/secrets/origin_cert /run/secrets/origin_key
+	@not_cloudflare not remote_ip {$CADDY_TRUSTED_PROXIES}
+	abort @not_cloudflare
+}
+
 # Collector: the game SDKs post event batches here. Caddy terminates TLS,
 # answers CORS preflights, enforces the request size limit (413) and passes
-# the client address to Vector in X-Forwarded-For (Caddy replaces any
-# X-Forwarded-For the client sent). Vector checks the API key.
+# the client address to Vector in X-Forwarded-For (replacing whatever the
+# client sent). Vector checks the API key.
 {$COLLECTOR_PUBLIC_HOSTNAME} {
+	import tls-{$TLS_MODE}
+
 	request_body {
 		max_size {$MAX_REQUEST_BYTES}
 	}
@@ -38,7 +68,9 @@
 			Access-Control-Expose-Headers "Retry-After"
 			Vary Origin
 		}
-		reverse_proxy vector:8080
+		reverse_proxy vector:8080 {
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle {
@@ -47,12 +79,16 @@
 }
 
 {$MCP_PUBLIC_HOSTNAME} {
+	import tls-{$TLS_MODE}
+
 	encode zstd gzip
 
 	reverse_proxy mcp-server:8000
 }
 
 {$METABASE_PUBLIC_HOSTNAME} {
+	import tls-{$TLS_MODE}
+
 	encode zstd gzip
 
 	reverse_proxy metabase:3000

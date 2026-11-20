@@ -20,7 +20,19 @@ responsibility. Optional datasets are configured in `datasets.json` (see the
 - `MCP_PUBLIC_HOSTNAME`
 - `METABASE_PUBLIC_HOSTNAME`
 
-Caddy obtains certificates for them; point their DNS records at the data node.
+Point their DNS records at the data node.
+
+## TLS
+
+- `TLS_MODE` — `auto` (default): Caddy obtains certificates itself on ports
+  80 and 443. `cloudflare`: Cloudflare proxies the traffic and Caddy serves
+  the Cloudflare Origin Certificate; see
+  [Behind Cloudflare](../quickstart/swarm/README.md#behind-cloudflare)
+- `HTTPS_PORT` — host port Caddy publishes for HTTPS (default 443)
+- `ORIGIN_CERT_FILE`, `ORIGIN_KEY_FILE` — the origin certificate and key
+  (`cloudflare` mode; default `cloudflare/origin.pem` and `cloudflare/origin.key`)
+- `CADDY_TRUSTED_PROXIES` — peers allowed to set the client address; deploy.sh
+  fills in Cloudflare's ranges in `cloudflare` mode
 
 ## Event collector
 

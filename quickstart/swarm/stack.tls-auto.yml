@@ -1,0 +1,10 @@
+# TLS_MODE=auto: Caddy obtains certificates itself, which needs port 80 for
+# the HTTP challenge (and redirects plain HTTP to HTTPS). deploy.sh adds this
+# file to the stack.
+services:
+  caddy:
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host

@@ -41,3 +41,4 @@ logs/
 quickstart/swarm/.generated/
 quickstart/swarm/datasets.json
 *.mmdb
+quickstart/swarm/cloudflare/
