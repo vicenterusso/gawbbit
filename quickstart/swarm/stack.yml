@@ -51,16 +51,9 @@ services:
       CORS_ORIGIN_REGEX: ${CORS_ORIGIN_REGEX:?run ./deploy.sh}
       CORS_MAX_AGE_SECONDS: ${CORS_MAX_AGE_SECONDS:-600}
       TLS_MODE: ${TLS_MODE:-auto}
+      CADDY_SITE_SCHEME: ${CADDY_SITE_SCHEME:-}
       CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:?run ./deploy.sh}
-    # Host mode keeps the real client address (the routing mesh would SNAT
-    # it); Vector hashes it into ingest_ip_hash and looks up its country.
-    # TLS_MODE=auto adds port 80 (stack.tls-auto.yml); TLS_MODE=cloudflare
-    # adds the origin certificate (stack.tls-cloudflare.yml).
-    ports:
-      - target: 443
-        published: ${HTTPS_PORT:-443}
-        protocol: tcp
-        mode: host
+    # Its ports depend on TLS_MODE: deploy.sh adds stack.tls-<mode>.yml.
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile

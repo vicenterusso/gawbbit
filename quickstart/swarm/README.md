@@ -14,7 +14,7 @@ ClickHouse stored its events, so it keeps no state of its own.
 
 | Service | Replicas | Where |
 |---|---|---|
-| `caddy` | 1 | data node (TLS certificates on disk, host-mode ports 80/443, or `HTTPS_PORT` only behind Cloudflare) |
+| `caddy` | 1 | data node (TLS certificates on disk, host-mode ports 80/443, or one port behind Cloudflare) |
 | `clickhouse` | 1 | data node |
 | `clickhouse-setup` | one-shot job | any node (talks to ClickHouse over the network) |
 | `clickhouse-backup` | 1 | data node (prunes the local backup directory) |
@@ -31,7 +31,7 @@ retries; the SDKs time out, keep the events in their local queues and send
 them again later. This stack scales the stateless tier; it does not make the
 data tier highly available.
 
-Caddy publishes 80/443 in host mode on the data node (or only `HTTPS_PORT`,
+Caddy publishes 80/443 in host mode on the data node (or one port behind Cloudflare,
 see [Behind Cloudflare](#behind-cloudflare)), so point the public DNS names
 there. Host mode preserves the client address (the routing mesh would
 replace it); Vector hashes it into `ingest_ip_hash` and uses it for GeoIP.
@@ -126,48 +126,58 @@ replace it); Vector hashes it into `ingest_ip_hash` and uses it for GeoIP.
 
 ## Behind Cloudflare
 
-With `TLS_MODE=cloudflare`, Cloudflare terminates TLS for the players and
-Caddy serves a Cloudflare Origin Certificate on `HTTPS_PORT`. Use it when
-ports 80 and 443 are taken on the host (for example by Docker Compose
-services that already run there) or when you want Cloudflare in front.
+Two modes put Cloudflare in front, for example when ports 80 and 443 are
+taken on the host by Docker Compose services that already run there. In
+both, players connect to Cloudflare over HTTPS, Caddy refuses connections
+that do not come from [Cloudflare's ranges](https://www.cloudflare.com/ips/),
+and the player's address comes from `CF-Connecting-IP`, so
+`ingest_ip_hash` and GeoIP see the player, not Cloudflare.
+
+| `TLS_MODE` | Cloudflare SSL/TLS mode | Cloudflare → server | On the server |
+|---|---|---|---|
+| `cloudflare-flexible` | Flexible | plain HTTP to `HTTP_PORT` | nothing |
+| `cloudflare` | Full (strict) | HTTPS to `HTTPS_PORT` | a Cloudflare Origin Certificate |
+
+With Flexible, the traffic between Cloudflare and the server (API keys, MCP
+tokens, Metabase logins) is not encrypted. `cloudflare` closes that gap at
+the cost of one certificate file.
 
 1. In Cloudflare, for the zone:
    - DNS: `A` records for the three hostnames to the data node's public IP,
      **proxied** (orange cloud).
-   - SSL/TLS → Overview: **Full (strict)**.
-   - SSL/TLS → Origin Server → **Create Certificate** for the three hostnames
-     (or `*.yourdomain.com`). Save the certificate as
+   - SSL/TLS → Overview: **Flexible** or **Full (strict)**, matching
+     `TLS_MODE`.
+   - Full (strict) only: SSL/TLS → Origin Server → **Create Certificate**
+     for the three hostnames (or `*.yourdomain.com`). Save the certificate as
      `cloudflare/origin.pem` and the private key as `cloudflare/origin.key`
      next to `deploy.sh` (`chmod 600`; the directory is git-ignored).
    - Rules → **Origin Rules**: when the hostname is one of the three, rewrite
-     the destination port to `HTTPS_PORT` (for example 8443). Players keep
-     using `https://collector.yourdomain.com` on 443. Without the rule,
-     `HTTPS_PORT` must be one Cloudflare proxies (8443, 2053, 2083, 2087,
-     2096) and the SDKs must use it in the URL.
+     the destination port to `HTTP_PORT` (Flexible) or `HTTPS_PORT` (Full).
+     Players keep using `https://collector.yourdomain.com`. Without the rule
+     the port must be one Cloudflare proxies (HTTP: 8080, 8880, 2052, 2082,
+     2086, 2095; HTTPS: 8443, 2053, 2083, 2087, 2096) and appear in the URLs.
    - Security: the SDKs are not browsers and cannot solve challenges. Keep
      **Bot Fight Mode** off, or add a WAF custom rule that skips the managed
      challenges for the collector hostname.
-2. In `.env`:
+2. In `.env`, for example:
 
    ```ini
-   TLS_MODE=cloudflare
-   HTTPS_PORT=8443
+   TLS_MODE=cloudflare-flexible
+   HTTP_PORT=8080
    ```
 
-3. Open `HTTPS_PORT` in the host firewall and the cloud security list (on
-   OCI, an ingress rule in the VCN security list or NSG). Caddy already
-   refuses connections that do not come from
-   [Cloudflare's ranges](https://www.cloudflare.com/ips/), so you may open it
-   to `0.0.0.0/0` or only to those ranges.
+   or `TLS_MODE=cloudflare` with `HTTPS_PORT=8443`.
+3. Open that port in the host firewall and the cloud security list (on OCI,
+   an ingress rule in the VCN security list or NSG). Caddy already refuses
+   other peers, so you may open it to `0.0.0.0/0` or only to Cloudflare's
+   ranges.
 4. `./deploy.sh`, then check through Cloudflare:
    `curl -i https://collector.yourdomain.com/healthz`. A `curl` straight to
-   `https://<server-ip>:8443` is refused on purpose.
+   the server's IP and port is refused on purpose.
 
-Caddy takes the player's address from `CF-Connecting-IP` only when the
-connection comes from Cloudflare, so `ingest_ip_hash` and GeoIP see the
-player, not Cloudflare. Cloudflare accepts bodies up to 100 MB, well above
-`MAX_REQUEST_BYTES`. When Cloudflare publishes new ranges, set
-`CADDY_TRUSTED_PROXIES` in `.env` to the full new list.
+Cloudflare accepts bodies up to 100 MB, well above `MAX_REQUEST_BYTES`. When
+Cloudflare publishes new ranges, set `CADDY_TRUSTED_PROXIES` in `.env` to the
+full new list.
 
 ## What the collector accepts
 
@@ -344,7 +354,7 @@ The CI workflow runs it on every push and pull request.
 | File | Purpose |
 |---|---|
 | `stack.yml` | the stack |
-| `stack.tls-auto.yml`, `stack.tls-cloudflare.yml` | port 80 for Caddy's own certificates, or the Cloudflare origin certificate (`TLS_MODE`) |
+| `stack.tls-*.yml` | Caddy's ports (and the origin certificate) for each `TLS_MODE` |
 | `.env.example` | all settings |
 | `datasets.example.json` | dataset template (copy to `datasets.json`) |
 | `deploy.sh` | validate, render datasets, name configs by hash, deploy, clean up |

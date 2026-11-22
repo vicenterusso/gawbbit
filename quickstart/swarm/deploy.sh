@@ -67,6 +67,8 @@ done
 [[ "${MAX_REQUEST_BYTES:-1048576}" =~ ^[1-9][0-9]*$ ]] || die "MAX_REQUEST_BYTES must be a number of bytes"
 export HTTPS_PORT="${HTTPS_PORT:-443}"
 if [[ ! "$HTTPS_PORT" =~ ^[1-9][0-9]{0,4}$ ]] || ((HTTPS_PORT > 65535)); then die "HTTPS_PORT must be a TCP port"; fi
+export HTTP_PORT="${HTTP_PORT:-80}"
+if [[ ! "$HTTP_PORT" =~ ^[1-9][0-9]{0,4}$ ]] || ((HTTP_PORT > 65535)); then die "HTTP_PORT must be a TCP port"; fi
 
 # --- TLS: Caddy's own certificates, or the Cloudflare origin certificate ----
 # Cloudflare's published ranges (https://www.cloudflare.com/ips/). Only they
@@ -81,6 +83,10 @@ case "$TLS_MODE" in
   auto)
     CADDY_TRUSTED_PROXIES="${CADDY_TRUSTED_PROXIES:-127.0.0.1/32}"
     ;;
+  cloudflare-flexible)
+    CADDY_TRUSTED_PROXIES="${CADDY_TRUSTED_PROXIES:-$cloudflare_ranges}"
+    export CADDY_SITE_SCHEME="http://"
+    ;;
   cloudflare)
     CADDY_TRUSTED_PROXIES="${CADDY_TRUSTED_PROXIES:-$cloudflare_ranges}"
     export ORIGIN_CERT_FILE="${ORIGIN_CERT_FILE:-./cloudflare/origin.pem}"
@@ -90,7 +96,7 @@ case "$TLS_MODE" in
     grep -q 'BEGIN CERTIFICATE' "$ORIGIN_CERT_FILE" || die "$ORIGIN_CERT_FILE is not a PEM certificate"
     grep -q 'PRIVATE KEY' "$ORIGIN_KEY_FILE" || die "$ORIGIN_KEY_FILE is not a PEM private key"
     ;;
-  *) die "TLS_MODE must be auto or cloudflare" ;;
+  *) die "TLS_MODE must be auto, cloudflare or cloudflare-flexible" ;;
 esac
 CADDY_TRUSTED_PROXIES="$(tr -s '[:space:]' ' ' <<< "$CADDY_TRUSTED_PROXIES" | sed 's/^ //; s/ $//')"
 export CADDY_TRUSTED_PROXIES

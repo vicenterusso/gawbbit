@@ -1,8 +1,13 @@
-# TLS_MODE=cloudflare: Caddy serves the Cloudflare Origin Certificate on
-# HTTPS_PORT, and port 80 is not published. deploy.sh adds this file to the
-# stack.
+# TLS_MODE=cloudflare (SSL "Full (strict)"): Caddy serves the Cloudflare
+# Origin Certificate on HTTPS_PORT; port 80 is not published. deploy.sh adds
+# this file to the stack.
 services:
   caddy:
+    ports:
+      - target: 443
+        published: ${HTTPS_PORT:-443}
+        protocol: tcp
+        mode: host
     secrets:
       - source: origin_cert
         target: origin_cert

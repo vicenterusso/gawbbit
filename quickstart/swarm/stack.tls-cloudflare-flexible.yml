@@ -1,0 +1,10 @@
+# TLS_MODE=cloudflare-flexible (SSL "Flexible"): Cloudflare talks plain HTTP
+# to Caddy on HTTP_PORT; no certificate on the server and no port 443.
+# deploy.sh adds this file to the stack.
+services:
+  caddy:
+    ports:
+      - target: 80
+        published: ${HTTP_PORT:-80}
+        protocol: tcp
+        mode: host

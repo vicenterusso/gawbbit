@@ -25,14 +25,16 @@ Point their DNS records at the data node.
 ## TLS
 
 - `TLS_MODE` — `auto` (default): Caddy obtains certificates itself on ports
-  80 and 443. `cloudflare`: Cloudflare proxies the traffic and Caddy serves
-  the Cloudflare Origin Certificate; see
+  80 and 443. `cloudflare-flexible`: Cloudflare (SSL Flexible) talks plain
+  HTTP to Caddy on `HTTP_PORT`. `cloudflare`: Cloudflare (SSL Full strict)
+  talks HTTPS and Caddy serves the Cloudflare Origin Certificate; see
   [Behind Cloudflare](../quickstart/swarm/README.md#behind-cloudflare)
+- `HTTP_PORT` — host port for HTTP in `cloudflare-flexible` mode (default 80)
 - `HTTPS_PORT` — host port Caddy publishes for HTTPS (default 443)
 - `ORIGIN_CERT_FILE`, `ORIGIN_KEY_FILE` — the origin certificate and key
   (`cloudflare` mode; default `cloudflare/origin.pem` and `cloudflare/origin.key`)
 - `CADDY_TRUSTED_PROXIES` — peers allowed to set the client address; deploy.sh
-  fills in Cloudflare's ranges in `cloudflare` mode
+  fills in Cloudflare's ranges in both cloudflare modes
 
 ## Event collector
 

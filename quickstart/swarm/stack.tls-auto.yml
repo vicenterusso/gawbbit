@@ -1,10 +1,17 @@
 # TLS_MODE=auto: Caddy obtains certificates itself, which needs port 80 for
 # the HTTP challenge (and redirects plain HTTP to HTTPS). deploy.sh adds this
 # file to the stack.
+#
+# Host mode keeps the real client address (the routing mesh would SNAT it);
+# Vector hashes it into ingest_ip_hash and looks up its country.
 services:
   caddy:
     ports:
       - target: 80
         published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: ${HTTPS_PORT:-443}
         protocol: tcp
         mode: host
