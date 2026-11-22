@@ -178,6 +178,43 @@ the cost of one certificate file.
    `curl -i https://collector.yourdomain.com/healthz`. A `curl` straight to
    the server's IP and port is refused on purpose.
 
+### With a reverse proxy already on the host
+
+If nginx (or another proxy) already owns port 80 or 443 and receives the
+Cloudflare traffic, let it forward the three hostnames to Caddy instead of
+opening another port. Keep `HTTP_PORT` closed in the cloud firewall and add
+to `.env`:
+
+```ini
+TLS_MODE=cloudflare-flexible
+HTTP_PORT=8080
+CADDY_TRUSTED_PROXIES=private_ranges
+```
+
+Caddy then accepts connections from private addresses (your proxy) and
+still takes the player's address from the `CF-Connecting-IP` header that
+Cloudflare set and the proxy passed on. An nginx server block:
+
+```nginx
+server {
+    listen 80;
+    server_name collector.yourdomain.com mcp.yourdomain.com metabase.yourdomain.com;
+    client_max_body_size 2m;          # above MAX_REQUEST_BYTES; Caddy answers 413
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;   # nginx in a container: the host's private IP
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_buffering off;              # MCP streams its answers
+        proxy_read_timeout 300s;
+    }
+}
+```
+
+No Origin Rule is needed: Cloudflare reaches nginx on port 80 as before.
+
 Cloudflare accepts bodies up to 100 MB, well above `MAX_REQUEST_BYTES`. When
 Cloudflare publishes new ranges, set `CADDY_TRUSTED_PROXIES` in `.env` to the
 full new list.
