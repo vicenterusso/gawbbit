@@ -67,7 +67,7 @@ echo "setup: service users ready"
 count=0
 if [[ -s "$datasets_file" ]]; then
   while IFS=$'\t' read -r id password; do
-    [[ -n "$id" ]] || continue
+    [[ -n "$id" && "$id" != \#* ]] || continue
     [[ "$id" =~ ^[a-z][a-z0-9_]{0,39}$ ]] || { echo "setup: invalid dataset id: $id" >&2; exit 1; }
     db=$(ident "dataset_$id")
     user=$(ident "mcp_$id")

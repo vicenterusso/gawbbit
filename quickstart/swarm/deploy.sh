@@ -165,7 +165,8 @@ if [[ -f "$datasets_file" ]]; then
   echo "deploy: datasets: $(jq -r '[.datasets[].id] | join(", ")' <<< "$datasets_json")" >&2
 else
   RAWBBIT_APP_DATASETS='{}'
-  : > .generated/datasets.tsv
+  # Swarm rejects an empty secret; setup.sh skips comment lines.
+  echo "# no datasets" > .generated/datasets.tsv
   printf '{"version": 1, "datasets": []}\n' > .generated/mcp-datasets.json
 fi
 export RAWBBIT_APP_DATASETS
