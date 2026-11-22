@@ -92,7 +92,7 @@ export RAWBBIT_ENV_FILE=.env.example RAWBBIT_STACK_NAME=$stack RAWBBIT_DATA_ROOT
   RAWBBIT_DATASETS_FILE=$work/datasets.json GEOIP_HOST_DIR=$data_root-geoip \
   COLLECTOR_PUBLIC_HOSTNAME=http://collector.e2e.test MCP_PUBLIC_HOSTNAME=http://mcp.e2e.test \
   METABASE_PUBLIC_HOSTNAME=http://metabase.e2e.test \
-  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"$app_id\",\"$ds_key\":\"$ds_app\"}" \
+  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"com.example.*\",\"$ds_key\":\"$ds_app\"}" \
   MCP_API_KEYS_JSON="{\"e2e\":\"$mcp_token\"}" \
   CORS_ALLOW_ORIGINS=https://game.e2e.test \
   VECTOR_REPLICAS=2 MCP_SERVER_REPLICAS=1 METABASE_REPLICAS=${E2E_METABASE_REPLICAS:-0}

@@ -80,9 +80,12 @@ replace it); Vector hashes it into `ingest_ip_hash` and uses it for GeoIP.
    ```
 
    `deploy.sh` refuses to run while any `change_me` value is left.
-   `COLLECTOR_API_KEYS_JSON` maps each API key to the one `app_id` it may
-   send, for example `{"long-random-key":"com.example.mygame"}`. Browser games
-   need their origin in `CORS_ALLOW_ORIGINS`.
+   `COLLECTOR_API_KEYS_JSON` maps each API key to the `app_id`s it may send:
+   an exact `app_id` (`{"key-1":"com.example.mygame"}`), a prefix ending in
+   `*` (`{"key-1":"com.example.*"}`) or `*` for any. With a prefix or `*`, a
+   new game needs no change on the server: it just sends its own `app_id`.
+   Browser games need their origin in `CORS_ALLOW_ORIGINS`; native and Unity
+   games do not.
 
 4. Deploy (and later, update) from the master:
 

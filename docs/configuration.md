@@ -38,8 +38,8 @@ Point their DNS records at the data node.
 
 ## Event collector
 
-- `COLLECTOR_API_KEYS_JSON` — `{"<api key>": "<app_id>", ...}`; each key may
-  send events for exactly one `app_id`
+- `COLLECTOR_API_KEYS_JSON` — `{"<api key>": "<app_id>", ...}`; the value is
+  an exact `app_id`, a prefix ending in `*` (`"com.example.*"`) or `*` for any
 - `IP_HASH_SALT` — salt of `ingest_ip_hash`; changing it breaks the link
   between old and new hashes of the same address
 - `MAX_REQUEST_BYTES` — larger bodies get `413` (default 1 MiB)

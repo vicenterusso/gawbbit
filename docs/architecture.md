@@ -35,8 +35,8 @@ It also proxies the MCP and Metabase hostnames.
 configuration is [`quickstart/swarm/vector/vector.yaml`](../quickstart/swarm/vector/vector.yaml):
 
 1. **Authenticate.** The `X-API-Key` must be a key of
-   `COLLECTOR_API_KEYS_JSON`; otherwise `401`. The key's single allowed
-   `app_id` travels with the request.
+   `COLLECTOR_API_KEYS_JSON`; otherwise `401`. The key's allowed `app_id`
+   (exact, a prefix ending in `*`, or `*` for any) travels with the request.
 2. **Split.** `{"events": [...]}` becomes one Vector event per entry. The
    receive time, a request id, the `User-Agent` and the client address are
    copied to each.

@@ -54,7 +54,7 @@ the SDK packages) so the SDKs, plugins and MCP clients keep working. See
 
 - **Caddy** terminates TLS, answers CORS preflights for browser games, limits
   the request size (413) and passes the client address to Vector.
-- **Vector** checks the `X-API-Key` (each key may send one `app_id`), splits
+- **Vector** checks the `X-API-Key` (each key is limited to one `app_id`, a prefix or any), splits
   each batch, validates every event, hashes the client IP, optionally adds the
   country from a GeoIP database and inserts rows into ClickHouse in batches.
   A request is answered `200` only after ClickHouse stored its events. Invalid

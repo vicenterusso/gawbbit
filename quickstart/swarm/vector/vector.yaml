@@ -42,8 +42,9 @@ sources:
       - X-Forwarded-For
     auth:
       strategy: custom
-      # COLLECTOR_API_KEYS_JSON maps each API key to the one app_id it may
-      # send. The allowed app_id travels with the events of the request.
+      # COLLECTOR_API_KEYS_JSON maps each API key to the app_id it may send:
+      # an exact app_id, a prefix ending in "*" ("studio.*") or "*" for any.
+      # The allowed value travels with the events of the request.
       source: |-
         keys = object(parse_json(get_env_var("COLLECTOR_API_KEYS_JSON") ?? "{}") ?? {}) ?? {}
         key = string(.headers."x-api-key") ?? ""
@@ -102,7 +103,10 @@ transforms:
       if event_id == "" { drop._drop = "event_id is required"; . = drop; return . }
       if app_id == "" { drop._drop = "app_id is required"; . = drop; return . }
       if event_name == "" { drop._drop = "event_name is required"; . = drop; return . }
-      if app_id != req.allowed_app_id {
+      # "*" allows any app_id; "studio.*" any app_id that starts with "studio.".
+      allowed = string(req.allowed_app_id) ?? ""
+      allowed_prefix = if ends_with(allowed, "*") { replace(allowed, r'\*$', "") } else { null }
+      if app_id != allowed && !(is_string(allowed_prefix) && starts_with(app_id, string!(allowed_prefix))) {
         drop._drop = "api key is not allowed for this app_id"; . = drop; return .
       }
 
