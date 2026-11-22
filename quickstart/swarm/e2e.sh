@@ -169,6 +169,36 @@ if "$loadgen" verify -manifest "$work/dataset.json" "${mcp[@]}" -mcp-token "$mcp
 fi
 log "main MCP endpoint cannot read dataset_$ds_id"
 
+# --- move a live app into a new dataset ---------------------------------------
+# deploy.sh creates the dataset before Vector routes to it, so an app with
+# traffic moves without a failed request or a lost event.
+mover_app=com.example.mover mover_total=4000
+"$loadgen" send "${collector[@]}" -api-key "$api_key" -app-id "$mover_app" \
+  -events "$mover_total" -rate 50 -batch 20 -concurrency 4 -duplicates 0 -negative=false \
+  -manifest "$work/mover.json" > "$work/mover.log" 2>&1 &
+mover_pid=$!
+sleep 10
+jq --arg app "$mover_app" --arg pw "e2e$(rand)" --arg tok "e2e$(rand)" \
+  '.datasets += [{"id": "mover", "app_ids": [$app], "main_exposed": false,
+    "clickhouse_password": $pw, "mcp_tokens": {"e2e": $tok}}]' \
+  "$work/datasets.json" > "$work/datasets.next" && mv "$work/datasets.next" "$work/datasets.json"
+./deploy.sh | tee "$work/redeploy.log"
+grep -q 'switching Vector to the new routes' "$work/redeploy.log" || die "deploy.sh did not create the dataset first"
+wait "$mover_pid" || { cat "$work/mover.log" >&2; die "events failed while the app moved to a dataset"; }
+ch_task=$(docker ps -q -f "name=${stack}_clickhouse.1" | head -1)
+ch() { docker exec "$ch_task" clickhouse-client -u "${CLICKHOUSE_ADMIN_USER:-admin}" --password "$CLICKHOUSE_ADMIN_PASSWORD" -q "$1"; }
+for _ in $(seq 30); do
+  counts=$(ch "SELECT
+    (SELECT count() FROM analytics.events FINAL WHERE app_id = '$mover_app'),
+    (SELECT count() FROM dataset_mover.events FINAL WHERE app_id = '$mover_app')")
+  read -r in_main in_dataset <<< "$counts"
+  ((in_main + in_dataset == mover_total)) && break
+  sleep 2
+done
+((in_main + in_dataset == mover_total)) || die "moved app: $in_main + $in_dataset rows, want $mover_total"
+((in_main > 0 && in_dataset > 0)) || die "moved app: the move did not happen during the traffic ($in_main / $in_dataset)"
+log "app moved to a dataset under traffic: $in_main rows before, $in_dataset after, none lost"
+
 # --- CORS -------------------------------------------------------------------
 preflight() {
   curl -s -o /dev/null -D - -X OPTIONS -H 'Host: collector.e2e.test' -H "Origin: $1" \

@@ -226,6 +226,40 @@ case ${#data_nodes[@]} in
 esac
 
 echo "deploy: stack=$stack"
+
+# When the dataset routes change, Vector must not send an app_id to a
+# dataset database before clickhouse-setup created it (the insert would fail
+# and the SDKs would get a 400). Deploy first with the routes Vector runs
+# now, wait for clickhouse-setup, then deploy the new routes.
+setup_iteration() {
+  docker service inspect "${stack}_clickhouse-setup" --format '{{if .JobStatus}}{{.JobStatus.JobIteration.Index}}{{end}}' 2>/dev/null || true
+}
+wait_for_setup() {
+  local iteration=$1 state
+  for _ in $(seq 120); do
+    state=$(docker service ps -q --no-trunc "${stack}_clickhouse-setup" 2>/dev/null |
+      xargs -r docker inspect --format '{{.JobIteration.Index}} {{.Status.State}}' 2>/dev/null |
+      awk -v it="$iteration" '$1 == it {print $2}' | sort -u | tr '\n' ' ')
+    [[ "$state" == *complete* ]] && return 0
+    [[ "$state" == *failed* || "$state" == *rejected* ]] && break
+    sleep 5
+  done
+  docker service logs --tail 20 "${stack}_clickhouse-setup" >&2 || true
+  die "clickhouse-setup did not complete (state: ${state:-none}); Vector still routes the previous datasets"
+}
+running_routes=$(docker service inspect "${stack}_vector" \
+  --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null |
+  sed -n 's/^RAWBBIT_APP_DATASETS=//p' || true)
+if [[ -n "$running_routes" && "$running_routes" != "$RAWBBIT_APP_DATASETS" ]]; then
+  echo "deploy: datasets changed; creating them before Vector routes to them"
+  before=$(setup_iteration)
+  RAWBBIT_APP_DATASETS="$running_routes" \
+    docker stack deploy --detach=false --prune --with-registry-auth "${stack_files[@]}" "$stack"
+  after=$(setup_iteration)
+  [[ -n "$after" && "$after" != "$before" ]] || die "clickhouse-setup did not start a new run"
+  wait_for_setup "$after"
+  echo "deploy: clickhouse-setup done; switching Vector to the new routes"
+fi
 docker stack deploy --detach=false --prune --with-registry-auth "${stack_files[@]}" "$stack"
 
 # --- drop configs/secrets from earlier deploys that nothing uses anymore -----

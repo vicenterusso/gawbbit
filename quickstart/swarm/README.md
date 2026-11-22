@@ -285,6 +285,11 @@ dataset.
 - Removing a dataset (or an `app_id`) from the file stops routing and removes
   its MCP endpoint; its database, data and user stay. Drop them by hand.
 - Moving an `app_id` into a dataset does not move its existing rows.
+- `./deploy.sh` applies a dataset change without downtime: when the routes
+  change, it first deploys with the routes Vector runs now, waits until
+  `clickhouse-setup` created the new databases, then switches Vector. An app
+  with live traffic moves without a failed request or a lost event (the e2e
+  test does exactly that).
 
 ## Backups
 
