@@ -125,12 +125,14 @@ umask 077
 mkdir -p .generated
 printf '%s' "$CLICKHOUSE_VECTOR_PASSWORD" > .generated/clickhouse_vector_password
 
+jq() {
+  if command -v jq >/dev/null; then command jq "$@"
+  else docker run --rm -i ghcr.io/jqlang/jq:1.7.1 "$@"; fi
+}
+
 datasets_file="${RAWBBIT_DATASETS_FILE:-datasets.json}"
+dataset_api_keys='{}'
 if [[ -f "$datasets_file" ]]; then
-  jq() {
-    if command -v jq >/dev/null; then command jq "$@"
-    else docker run --rm -i ghcr.io/jqlang/jq:1.7.1 "$@"; fi
-  }
   datasets_json=$(cat "$datasets_file")
   problems=$(jq -r '
     def bad($m): "  " + $m;
@@ -140,6 +142,8 @@ if [[ -f "$datasets_file" ]]; then
            then bad("datasets[\($i)].id must match ^[a-z][a-z0-9_]{0,39}$") else empty end),
         (if (.app_ids | type) != "array" or (.app_ids | length) == 0 or any(.app_ids[]; type != "string" or . == "")
            then bad("datasets[\($i)].app_ids must be a non-empty list of app_ids") else empty end),
+        (if any(.app_ids[]?; tostring | contains("*"))
+           then bad("datasets[\($i)].app_ids must be exact app_ids, without *") else empty end),
         (if (.clickhouse_password | type) != "string" or (.clickhouse_password | length) < 12
            then bad("datasets[\($i)].clickhouse_password must be a string of 12+ characters") else empty end),
         (if (.clickhouse_password // "" | tostring | contains("change_me"))
@@ -148,15 +152,24 @@ if [[ -f "$datasets_file" ]]; then
            then bad("datasets[\($i)].mcp_tokens must map labels to tokens of 16+ characters") else empty end),
         (if any(.mcp_tokens[]?; tostring | contains("change_me"))
            then bad("datasets[\($i)].mcp_tokens still has change_me values") else empty end),
+        (if has("api_keys") and ((.api_keys | type) != "array" or any(.api_keys[]; type != "string" or length < 16))
+           then bad("datasets[\($i)].api_keys must be a list of keys of 16+ characters") else empty end),
+        (if any(.api_keys[]?; tostring | contains("change_me"))
+           then bad("datasets[\($i)].api_keys still has change_me values") else empty end),
         (if has("main_exposed") and (.main_exposed | type) != "boolean"
            then bad("datasets[\($i)].main_exposed must be true or false") else empty end)
       ),
       ([.datasets[].id] | group_by(.) | map(select(length > 1)[0]) | .[] | bad("dataset id \(.) is used twice")),
-      ([.datasets[].app_ids[]?] | group_by(.) | map(select(length > 1)[0]) | .[] | bad("app_id \(.) is in more than one dataset"))
+      ([.datasets[].app_ids[]?] | group_by(.) | map(select(length > 1)[0]) | .[] | bad("app_id \(.) is in more than one dataset")),
+      ([.datasets[] | .id as $id | (.api_keys // [] | unique)[] | {key: ., id: $id}] | group_by(.key)
+        | map(select(length > 1)) | .[] | bad("one API key is in datasets \(map(.id) | join(", "))"))
     end' <<< "$datasets_json") || die "$datasets_file is not valid JSON"
   [[ -z "$problems" ]] || die "$datasets_file:"$'\n'"$problems"
 
   RAWBBIT_APP_DATASETS=$(jq -c '[.datasets[] | .id as $id | .app_ids[] | {key: ., value: $id}] | from_entries' <<< "$datasets_json")
+  # Each key of a dataset may send that dataset's app_ids.
+  dataset_api_keys=$(jq -c '[.datasets[] | (if (.app_ids | length) == 1 then .app_ids[0] else .app_ids end) as $apps
+    | (.api_keys // [])[] | {key: ., value: $apps}] | from_entries' <<< "$datasets_json")
   jq -r '.datasets[] | [.id, .clickhouse_password] | @tsv' <<< "$datasets_json" > .generated/datasets.tsv
   jq '{version: 1, datasets: [.datasets[] | {
         id, endpoint_path: "/datasets/\(.id)/mcp", database: "dataset_\(.id)", table: "events",
@@ -170,6 +183,17 @@ else
   printf '{"version": 1, "datasets": []}\n' > .generated/mcp-datasets.json
 fi
 export RAWBBIT_APP_DATASETS
+
+# --- collector API keys: .env COLLECTOR_API_KEYS_JSON + datasets.json api_keys
+env_api_keys="${COLLECTOR_API_KEYS_JSON:-}"
+[[ -n "${env_api_keys//[[:space:]]/}" ]] || env_api_keys='{}'
+COLLECTOR_API_KEYS_JSON=$(jq -c --argjson ds "$dataset_api_keys" '
+  if type != "object" or any(.[]; type != "string" and type != "array")
+    then error("must map API keys to app_ids")
+  elif any(keys[]; in($ds)) then error("a key is also in the api_keys of datasets.json")
+  else . + $ds end' <<< "$env_api_keys" 2>&1) || die "COLLECTOR_API_KEYS_JSON: ${COLLECTOR_API_KEYS_JSON#jq: error*: }"
+[[ "$COLLECTOR_API_KEYS_JSON" != '{}' ]] || die "no collector API keys: add api_keys to a dataset in $datasets_file or set COLLECTOR_API_KEYS_JSON in $env_file"
+export COLLECTOR_API_KEYS_JSON
 
 # --- content-addressed config and secret names -----------------------------
 # Swarm configs/secrets are immutable; a new name per content lets
@@ -230,7 +254,13 @@ echo "deploy: stack=$stack"
 # When the dataset routes change, Vector must not send an app_id to a
 # dataset database before clickhouse-setup created it (the insert would fail
 # and the SDKs would get a 400). Deploy first with the routes Vector runs
-# now, wait for clickhouse-setup, then deploy the new routes.
+# now, wait for clickhouse-setup, then deploy the new routes. The API keys
+# switch with the routes, so a new game's key never sends to `analytics`.
+running_vector_env() {
+  docker service inspect "${stack}_vector" \
+    --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null |
+    sed -n "s/^$1=//p" || true
+}
 setup_iteration() {
   docker service inspect "${stack}_clickhouse-setup" --format '{{if .JobStatus}}{{.JobStatus.JobIteration.Index}}{{end}}' 2>/dev/null || true
 }
@@ -247,13 +277,12 @@ wait_for_setup() {
   docker service logs --tail 20 "${stack}_clickhouse-setup" >&2 || true
   die "clickhouse-setup did not complete (state: ${state:-none}); Vector still routes the previous datasets"
 }
-running_routes=$(docker service inspect "${stack}_vector" \
-  --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null |
-  sed -n 's/^RAWBBIT_APP_DATASETS=//p' || true)
+running_routes=$(running_vector_env RAWBBIT_APP_DATASETS)
 if [[ -n "$running_routes" && "$running_routes" != "$RAWBBIT_APP_DATASETS" ]]; then
   echo "deploy: datasets changed; creating them before Vector routes to them"
+  running_keys=$(running_vector_env COLLECTOR_API_KEYS_JSON)
   before=$(setup_iteration)
-  RAWBBIT_APP_DATASETS="$running_routes" \
+  RAWBBIT_APP_DATASETS="$running_routes" COLLECTOR_API_KEYS_JSON="${running_keys:-$COLLECTOR_API_KEYS_JSON}" \
     docker stack deploy --detach=false --prune --with-registry-auth "${stack_files[@]}" "$stack"
   after=$(setup_iteration)
   [[ -n "$after" && "$after" != "$before" ]] || die "clickhouse-setup did not start a new run"

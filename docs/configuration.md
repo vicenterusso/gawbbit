@@ -39,7 +39,9 @@ Point their DNS records at the data node.
 ## Event collector
 
 - `COLLECTOR_API_KEYS_JSON` — `{"<api key>": "<app_id>", ...}`; the value is
-  an exact `app_id`, a prefix ending in `*` (`"com.example.*"`) or `*` for any
+  an exact `app_id`, a prefix ending in `*` (`"com.example.*"`) or `*` for any.
+  Optional when every game is a dataset with `api_keys` in `datasets.json`
+  (`quickstart/swarm/new-game.sh` adds one)
 - `IP_HASH_SALT` — salt of `ingest_ip_hash`; changing it breaks the link
   between old and new hashes of the same address
 - `MAX_REQUEST_BYTES` — larger bodies get `413` (default 1 MiB)

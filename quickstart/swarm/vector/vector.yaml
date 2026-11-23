@@ -42,14 +42,15 @@ sources:
       - X-Forwarded-For
     auth:
       strategy: custom
-      # COLLECTOR_API_KEYS_JSON maps each API key to the app_id it may send:
-      # an exact app_id, a prefix ending in "*" ("studio.*") or "*" for any.
-      # The allowed value travels with the events of the request.
+      # COLLECTOR_API_KEYS_JSON (built by deploy.sh from .env and the api_keys
+      # of datasets.json) maps each API key to the app_id it may send: an
+      # exact app_id, a prefix ending in "*" ("studio.*"), "*" for any, or a
+      # list of these. The allowed value travels with the events of the request.
       source: |-
         keys = object(parse_json(get_env_var("COLLECTOR_API_KEYS_JSON") ?? "{}") ?? {}) ?? {}
         key = string(.headers."x-api-key") ?? ""
         app = get(keys, [key]) ?? null
-        if !is_string(app) || key == "" {
+        if key == "" || !(is_string(app) || is_array(app)) {
           false
         } else {
           %rawbbit_allowed_app_id = app
@@ -103,10 +104,18 @@ transforms:
       if event_id == "" { drop._drop = "event_id is required"; . = drop; return . }
       if app_id == "" { drop._drop = "app_id is required"; . = drop; return . }
       if event_name == "" { drop._drop = "event_name is required"; . = drop; return . }
-      # "*" allows any app_id; "studio.*" any app_id that starts with "studio.".
-      allowed = string(req.allowed_app_id) ?? ""
-      allowed_prefix = if ends_with(allowed, "*") { replace(allowed, r'\*$', "") } else { null }
-      if app_id != allowed && !(is_string(allowed_prefix) && starts_with(app_id, string!(allowed_prefix))) {
+      # "*" allows any app_id; "studio.*" any app_id that starts with "studio.";
+      # a list allows what any of its entries allows.
+      allowed = req.allowed_app_id
+      allowed_list = if is_array(allowed) { array!(allowed) } else { [allowed] }
+      permitted = false
+      for_each(allowed_list) -> |_index, a| {
+        s = string(a) ?? ""
+        if s != "" && (s == app_id || (ends_with(s, "*") && starts_with(app_id, replace(s, r'\*$', "")))) {
+          permitted = true
+        }
+      }
+      if !permitted {
         drop._drop = "api key is not allowed for this app_id"; . = drop; return .
       }
 

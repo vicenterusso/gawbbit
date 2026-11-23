@@ -3,6 +3,7 @@
     {
       "id": "team_a",
       "app_ids": ["com.example.team_a_game"],
+      "api_keys": ["change_me_team_a_collector_api_key"],
       "main_exposed": false,
       "clickhouse_password": "change_me_team_a_clickhouse_password",
       "mcp_tokens": {

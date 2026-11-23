@@ -86,13 +86,13 @@ api_key=e2e$(rand) mcp_token=e2e$(rand) app_id=com.example.loadgen
 ds_key=e2e$(rand) ds_token=e2e$(rand) ds_app=com.example.loadgen.dataset ds_id=e2e
 cat > "$work/datasets.json" <<EOF
 {"datasets": [{"id": "$ds_id", "app_ids": ["$ds_app"], "main_exposed": false,
-  "clickhouse_password": "e2e$(rand)", "mcp_tokens": {"e2e": "$ds_token"}}]}
+  "api_keys": ["$ds_key"], "clickhouse_password": "e2e$(rand)", "mcp_tokens": {"e2e": "$ds_token"}}]}
 EOF
 export RAWBBIT_ENV_FILE=.env.example RAWBBIT_STACK_NAME=$stack RAWBBIT_DATA_ROOT=$data_root \
   RAWBBIT_DATASETS_FILE=$work/datasets.json GEOIP_HOST_DIR=$data_root-geoip \
   COLLECTOR_PUBLIC_HOSTNAME=http://collector.e2e.test MCP_PUBLIC_HOSTNAME=http://mcp.e2e.test \
   METABASE_PUBLIC_HOSTNAME=http://metabase.e2e.test \
-  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"com.example.*\",\"$ds_key\":\"$ds_app\"}" \
+  COLLECTOR_API_KEYS_JSON="{\"$api_key\":\"com.example.*\"}" \
   MCP_API_KEYS_JSON="{\"e2e\":\"$mcp_token\"}" \
   CORS_ALLOW_ORIGINS=https://game.e2e.test \
   VECTOR_REPLICAS=2 MCP_SERVER_REPLICAS=1 METABASE_REPLICAS=${E2E_METABASE_REPLICAS:-0}
@@ -172,7 +172,7 @@ log "main MCP endpoint cannot read dataset_$ds_id"
 # --- move a live app into a new dataset ---------------------------------------
 # deploy.sh creates the dataset before Vector routes to it, so an app with
 # traffic moves without a failed request or a lost event.
-mover_app=com.example.mover mover_total=4000
+mover_app=com.example.mover mover_total=12000
 "$loadgen" send "${collector[@]}" -api-key "$api_key" -app-id "$mover_app" \
   -events "$mover_total" -rate 50 -batch 20 -concurrency 4 -duplicates 0 -negative=false \
   -manifest "$work/mover.json" > "$work/mover.log" 2>&1 &
@@ -198,6 +198,29 @@ done
 ((in_main + in_dataset == mover_total)) || die "moved app: $in_main + $in_dataset rows, want $mover_total"
 ((in_main > 0 && in_dataset > 0)) || die "moved app: the move did not happen during the traffic ($in_main / $in_dataset)"
 log "app moved to a dataset under traffic: $in_main rows before, $in_dataset after, none lost"
+
+# --- new-game.sh: a game with its own database and its own API key -----------
+new_app=com.example.newgame new_total=300
+./new-game.sh newgame "$new_app" > "$work/new-game.log" 2>&1 || { cat "$work/new-game.log" >&2; die "new-game.sh failed"; }
+new_key=$(jq -r '.datasets[] | select(.id == "newgame") | .api_keys[0]' "$work/datasets.json")
+"$loadgen" send "${collector[@]}" -api-key "$new_key" -app-id "$new_app" \
+  -events "$new_total" -rate 0 -batch 50 -concurrency 2 -duplicates 0 -negative=false \
+  -manifest "$work/newgame.json" > "$work/newgame-send.log" 2>&1 || { cat "$work/newgame-send.log" >&2; die "sending with the new game's key failed"; }
+# Its key may not send for another app.
+"$loadgen" send "${collector[@]}" -api-key "$new_key" -app-id "$mover_app" \
+  -events 10 -rate 0 -batch 10 -concurrency 1 -duplicates 0 -negative=false \
+  -manifest "$work/newgame-other.json" > /dev/null 2>&1 || true
+for _ in $(seq 30); do
+  read -r in_new in_main_new other <<< "$(ch "SELECT
+    (SELECT count() FROM dataset_newgame.events FINAL WHERE app_id = '$new_app'),
+    (SELECT count() FROM analytics.events FINAL WHERE app_id = '$new_app'),
+    (SELECT count() FROM dataset_mover.events FINAL WHERE app_id = '$mover_app') - $in_dataset")"
+  ((in_new == new_total)) && break
+  sleep 2
+done
+((in_new == new_total && in_main_new == 0)) || die "new game: $in_new rows in dataset_newgame, $in_main_new in analytics; want $new_total and 0"
+((other == 0)) || die "the new game's key sent $other events for $mover_app"
+log "new-game.sh: $new_total rows in dataset_newgame, none in analytics, key limited to its app"
 
 # --- CORS -------------------------------------------------------------------
 preflight() {

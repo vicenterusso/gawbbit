@@ -84,6 +84,9 @@ replace it); Vector hashes it into `ingest_ip_hash` and uses it for GeoIP.
    an exact `app_id` (`{"key-1":"com.example.mygame"}`), a prefix ending in
    `*` (`{"key-1":"com.example.*"}`) or `*` for any. With a prefix or `*`, a
    new game needs no change on the server: it just sends its own `app_id`.
+   A game with its own dataset can keep its key in `datasets.json` instead
+   (see [Datasets](#datasets)); when every game does, leave
+   `COLLECTOR_API_KEYS_JSON` empty.
    Browser games need their origin in `CORS_ALLOW_ORIGINS`; native and Unity
    games do not.
 
@@ -249,8 +252,21 @@ that. MCP, Metabase and the load generator see the table as it is.
 ## Datasets
 
 A dataset sends chosen `app_id`s to their own database and gives them their
-own read-only MCP endpoint, for example to hand a game's data to someone
-without the rest:
+own read-only MCP endpoint, for example one database per game, or a game's
+data to hand to someone without the rest.
+
+One game per database, each with its own API key:
+
+```bash
+./new-game.sh mygame com.example.mygame
+```
+
+`new-game.sh` generates the game's collector API key, ClickHouse password and
+MCP token, adds the dataset to `datasets.json` (git-ignored; created when
+missing), runs `./deploy.sh` and prints what the SDK, Metabase and MCP need.
+`.env` does not change. `--no-deploy` only edits the file.
+
+By hand:
 
 ```bash
 cp datasets.example.json datasets.json   # git-ignored
@@ -264,6 +280,7 @@ $EDITOR datasets.json
     {
       "id": "team_a",
       "app_ids": ["com.example.team_a_game"],
+      "api_keys": ["long-random-collector-key"],
       "main_exposed": false,
       "clickhouse_password": "long-random-password",
       "mcp_tokens": { "agent": "long-random-token" }
@@ -279,7 +296,9 @@ read-only ClickHouse user `mcp_<id>`. Vector inserts events of the listed
 dataset at `https://<MCP_PUBLIC_HOSTNAME>/datasets/<id>/mcp` for the
 `mcp_tokens` bearer tokens. `main_exposed: true` also offers the dataset to
 the main `/mcp` endpoint's tools. Metabase's ClickHouse user can read every
-dataset.
+dataset. `api_keys` (optional) are collector API keys that may send the
+dataset's `app_ids`; `deploy.sh` adds them to the keys of
+`COLLECTOR_API_KEYS_JSON`. A key must not be in both places.
 
 - Use another `RAWBBIT_DATASETS_FILE` path if you keep the file elsewhere.
 - Removing a dataset (or an `app_id`) from the file stops routing and removes
@@ -289,7 +308,8 @@ dataset.
   change, it first deploys with the routes Vector runs now, waits until
   `clickhouse-setup` created the new databases, then switches Vector. An app
   with live traffic moves without a failed request or a lost event (the e2e
-  test does exactly that).
+  test does exactly that). New API keys switch together with the routes, so
+  a new game's key is never accepted before its database exists.
 
 ## Backups
 
@@ -403,6 +423,7 @@ The CI workflow runs it on every push and pull request.
 | `.env.example` | all settings |
 | `datasets.example.json` | dataset template (copy to `datasets.json`) |
 | `deploy.sh` | validate, render datasets, name configs by hash, deploy, clean up |
+| `new-game.sh` | add a game with its own database and API key to `datasets.json`, then deploy |
 | `bootstrap-data-node.sh` | host directories |
 | `e2e.sh` | end-to-end test on a single-node swarm (used by CI) |
 | `Caddyfile` | public routes: collector (CORS, size limit), MCP, Metabase |

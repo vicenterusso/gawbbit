@@ -79,7 +79,7 @@ services:
     command: ["--config", "/etc/vector/vector.yaml", "--config", "/etc/vector/geoip.yaml"]
     logging: *logging
     environment:
-      COLLECTOR_API_KEYS_JSON: ${COLLECTOR_API_KEYS_JSON:?COLLECTOR_API_KEYS_JSON is required}
+      COLLECTOR_API_KEYS_JSON: ${COLLECTOR_API_KEYS_JSON:?run ./deploy.sh}
       IP_HASH_SALT: ${IP_HASH_SALT:?IP_HASH_SALT is required}
       RAWBBIT_APP_DATASETS: ${RAWBBIT_APP_DATASETS:?run ./deploy.sh}
       VECTOR_LOG: ${VECTOR_LOG:-info}
