@@ -126,7 +126,7 @@ mkdir -p .generated
 printf '%s' "$CLICKHOUSE_VECTOR_PASSWORD" > .generated/clickhouse_vector_password
 
 jq() {
-  if command -v jq >/dev/null; then command jq "$@"
+  if type -P jq >/dev/null; then command jq "$@"
   else docker run --rm -i ghcr.io/jqlang/jq:1.7.1 "$@"; fi
 }
 

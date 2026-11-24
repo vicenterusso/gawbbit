@@ -38,7 +38,7 @@ id=${args[0]} app_id=${args[1]}
 [[ "$app_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || die "app_id must be letters, digits, ., _ and -, for example com.studio.game"
 
 jq() {
-  if command -v jq >/dev/null; then command jq "$@"
+  if type -P jq >/dev/null; then command jq "$@"
   else docker run --rm -i ghcr.io/jqlang/jq:1.7.1 "$@"; fi
 }
 secret() { od -An -tx1 -N"$1" /dev/urandom | tr -d ' \n'; }
