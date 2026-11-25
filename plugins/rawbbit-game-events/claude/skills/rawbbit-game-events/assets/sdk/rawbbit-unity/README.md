@@ -4,12 +4,12 @@ Generic Unity client source for sending game-owned events to the Rawbbit Collect
 
 ## Status
 
-Initial source implementation. **Unity Editor compilation and Android/iOS player/device validation have not been run in this environment.** Unity 2022.3 LTS is the provisional API baseline; confirm the consuming project's `ProjectSettings/ProjectVersion.txt` and pass the integration gates before claiming a supported production build.
+Initial source implementation. Compiles in the Unity 6 Editor (first game integration). **The Editor/PlayMode tests and Android/iOS player/device validation have not been run.** Unity 2022.3 LTS is the provisional API baseline; confirm the consuming project's `ProjectSettings/ProjectVersion.txt` and pass the integration gates before claiming a supported production build.
 
 ## Install in a game
 
 1. Copy `Runtime/` into the game at `Assets/Rawbbit/`.
-2. Install Unity's Newtonsoft JSON package through Package Manager: `com.unity.nuget.newtonsoft-json`. The package supplies `Newtonsoft.Json.dll`, which Unity references automatically because the SDK asmdef leaves precompiled references enabled. No exact package version is pinned because the target editor is not available here; resolve and record a compatible version in the consuming project before release. Do not copy another Newtonsoft DLL into `Assets`.
+2. Install Unity's Newtonsoft JSON package through Package Manager: `com.unity.nuget.newtonsoft-json`. The package supplies `Newtonsoft.Json.dll`, which Unity references automatically because the SDK asmdef leaves precompiled references enabled. Verified with version 3.2.2 on Unity 6; record the version you use in the consuming project. Do not copy another Newtonsoft DLL into `Assets`.
 3. Copy and rename `Examples/GameAnalyticsTemplate/GameAnalyticsAdapter.cs.template` into the game's own analytics folder (for example `Assets/Game/Analytics/GameAnalyticsAdapter.cs`) and change its namespace/configuration/event mapping.
 4. Follow [`INTEGRATION.md`](INTEGRATION.md). Do not edit SDK files to add a game's events.
 
